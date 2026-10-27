@@ -1,0 +1,1431 @@
+<title>Color &amp; Type Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Martian+Mono:wght@400&display=swap">
+<style>
+/* The motion demo, unchanged in layout and motion, with every color and font routed through tokens the explorer panel rewrites live. Dark only, whatever the system setting. */
+:root {
+  color-scheme: dark;
+  --paper: #111316;
+  --paper-2: #1f2328;
+  --ink: #e8eaed;
+  --plate: #e8eaed;
+  --plate-ink: #121417;
+  --accent: #121417;
+  --accent-ink: #e8eaed;
+  --mark: var(--plate);
+  --mark-ink: var(--plate-ink);
+  --blot: var(--plate);
+  --ink-2: color-mix(in oklab, var(--ink) 74%, var(--paper));
+  --display: "Archivo", "Arial Black", Arial, sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono: "Martian Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --d-w: 900; --d-w2: 800; --d-wd: 118%; --d-it: normal; --d-tr: -0.025em; --d-sc: 1; --d-sn: 1; --b-sc: 1;
+  --snap: cubic-bezier(.2, 1.7, .4, 1);
+  --side-w: 18.5rem;
+  --panel-w: 0px;
+}
+*, *::before, *::after { box-sizing: border-box; }
+/* Big monitors: the whole UI scales up gently, from 16px at 1440 wide to 18px by about 1940 */
+html { font-size: clamp(100%, 0.45vw + 0.58rem, 112.5%); }
+html, body { height: 100%; }
+body { background: var(--paper); color: var(--ink); font: 400 calc(1.0625rem * var(--b-sc))/1.65 var(--body); overflow: hidden; }
+a { color: inherit; }
+::selection { background: var(--mark); color: var(--mark-ink); }
+:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+img { display: block; max-width: 100%; height: auto; }
+p { margin: 0; text-wrap: pretty; }
+
+.site { position: relative; height: 100%; display: grid; }
+.side, .main { grid-area: 1 / 1; }
+
+/* Sidebar */
+.side {
+  position: relative; z-index: 5; min-height: 0; width: var(--side-w); justify-self: start;
+  display: grid; grid-template-rows: auto 1fr auto; gap: 1.5rem;
+  padding: 30px 40px 26px 36px;
+  background: var(--plate); color: var(--plate-ink);
+  clip-path: polygon(0 0, 89% 0, 100% 100%, 0 100%);
+}
+.mark { justify-self: start; text-decoration: none; font-family: var(--display); font-weight: var(--d-w); font-style: var(--d-it); font-stretch: var(--d-wd); font-size: calc(2.1rem * var(--d-sn)); line-height: .92; letter-spacing: calc(var(--d-tr) - .005em); rotate: -4deg; transform-origin: left; padding-top: 4px; }
+.nav { position: relative; align-self: center; }
+.nav-list { margin: 0; padding: 0; list-style: none; display: grid; gap: .85rem; }
+.nav-bar {
+  position: relative; isolation: isolate; display: inline-block;
+  margin-left: var(--x); rotate: var(--r); transform-origin: left bottom;
+  padding: .52em 1.25em .52em 1em; white-space: nowrap; text-decoration: none;
+  font-family: var(--display); font-weight: var(--d-w2); font-style: var(--d-it); font-stretch: var(--d-wd); font-size: calc(1.15rem * var(--d-sn)); line-height: 1; letter-spacing: calc(var(--d-tr) + .02em);
+  color: var(--plate-ink);
+  transition: scale 90ms ease-out;
+}
+.nav-bar::before { content: ""; position: absolute; inset: 0; z-index: -2; background: color-mix(in srgb, var(--plate-ink) 15%, transparent); clip-path: polygon(4% 0, 100% 0, 96% 100%, 0 100%); }
+.nav-bar .plate { position: absolute; inset: -14% -5% -16% -3%; width: 108%; height: 130%; z-index: -1; scale: 0; }
+.nav-bar .plate polygon { fill: var(--accent); }
+/* Selecting stamps in with the overshoot; deselecting drops out at once, because an overshoot on the way down flips the plate inside out for a frame */
+.nav-bar.is-on { scale: 1.06; color: var(--accent-ink); transition: scale 120ms var(--snap); }
+.nav-bar.is-on::before { opacity: 0; }
+.nav-bar.is-on .plate { scale: 1; transition: scale 120ms var(--snap); }
+.nav-bar:focus-visible { outline: none; text-decoration: underline; text-underline-offset: .22em; }
+.nav-cursor { position: absolute; left: 0; top: 0; pointer-events: none; }
+.tri { position: absolute; left: -27px; top: -31px; width: 20px; height: 24px; background: var(--accent); clip-path: polygon(0 0, 100% 50%, 0 100%); transform-origin: 100% 50%; }
+.side-foot { display: grid; gap: .9rem; justify-items: start; }
+
+/* Buttons. The slanted plate is drawn by ::before, so the button itself stays unclipped and its focus ring can follow the slant */
+.btn {
+  position: relative; isolation: isolate;
+  display: inline-flex; align-items: center; text-decoration: none; cursor: pointer;
+  font: 700 .95rem/1 var(--body); padding: .8rem 1.35rem .8rem 1rem; min-height: 44px;
+  background: none; color: var(--plate-ink); border: 0;
+  transition: translate 150ms cubic-bezier(.16, 1, .3, 1);
+}
+.btn::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--btn-bg, var(--plate)); clip-path: polygon(0 0, 100% 0, 93% 100%, 0 100%); }
+@media (hover: hover) { .btn:hover { translate: 0 -2px; } }
+.btn:active { translate: 0 0; }
+.btn.on-plate { --btn-bg: var(--plate-ink); color: var(--plate); }
+/* Keyboard focus: a 3px gap in the surface color, then a 3px yellow ring, both traced around the slanted plate */
+.btn:focus-visible {
+  outline: none; --g: var(--btn-gap, var(--paper));
+  filter: drop-shadow(3px 0 0 var(--g)) drop-shadow(-3px 0 0 var(--g)) drop-shadow(0 3px 0 var(--g)) drop-shadow(0 -3px 0 var(--g))
+          drop-shadow(3px 0 0 var(--accent)) drop-shadow(-3px 0 0 var(--accent)) drop-shadow(0 3px 0 var(--accent)) drop-shadow(0 -3px 0 var(--accent));
+}
+.side .btn { --btn-gap: var(--plate); }
+/* LinkedIn buttons: a size up, with the accent "in" icon waiting in a pocket behind the plate. Hover or keyboard focus slides it out in held frames with a small overshoot, part of it still tucked under the button; leaving drops it back at once, like the menu plate */
+.btn-big { font-size: 1.08rem; padding: .95rem 1.6rem .95rem 1.15rem; min-height: 3.25rem; }
+.pocket { position: relative; isolation: isolate; display: inline-flex; justify-self: start; --s: 2rem; --lift: 0px; }
+.pocket-icon { position: absolute; width: var(--s); height: var(--s); fill: var(--accent); pointer-events: none; }
+.pocket-up { --pocket-in: pocket-up; }
+.pocket-up .pocket-icon { left: 1rem; bottom: calc(100% - var(--s) * .32); translate: 0 100%; rotate: -8deg; --out: 0 calc(var(--lift) * -1); }
+.pocket-right { --pocket-in: pocket-right; }
+.pocket-right .pocket-icon { top: calc(50% - var(--s) / 2); left: calc(100% - var(--s) * .32); translate: -115% 0; rotate: 8deg; --out: var(--lift) 0; }
+/* With keyboard focus the ring adds 6px around the plate, so the icon comes out 6px further and stays readable */
+.pocket:has(.btn:focus-visible) { --lift: 6px; }
+.pocket:has(.btn:focus-visible) .pocket-icon { translate: var(--out); animation: var(--pocket-in) 200ms; }
+@media (hover: hover) { .pocket:hover .pocket-icon { translate: var(--out); animation: var(--pocket-in) 200ms; } }
+@keyframes pocket-up { 0% { translate: 0 100%; animation-timing-function: steps(3, end); } 70% { translate: 0 calc(-14% - var(--lift)); animation-timing-function: steps(1, end); } 100% { translate: var(--out); } }
+@keyframes pocket-right { 0% { translate: -115% 0; animation-timing-function: steps(3, end); } 70% { translate: calc(14% + var(--lift)) 0; animation-timing-function: steps(1, end); } 100% { translate: var(--out); } }
+
+/* Page area */
+.main { position: relative; overflow: hidden; min-width: 0; }
+.page { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; visibility: hidden; background: var(--paper); padding-left: var(--side-w); padding-right: var(--panel-w); }
+.page.is-current { visibility: visible; }
+.page-inner { container-type: inline-size; max-width: 78rem; margin-inline: auto; padding: clamp(36px, 6vw, 72px) clamp(20px, 4.5vw, 64px) 96px clamp(28px, 5vw, 72px); display: grid; gap: 2.2rem; }
+.ink { position: absolute; inset: 0; z-index: 2; visibility: hidden; pointer-events: none; filter: url(#blot-wobble); }
+.ink i { position: absolute; width: 10px; aspect-ratio: 1; border-radius: 50%; background: var(--blot); translate: -50% -50%; scale: 0; }
+
+/* Type */
+.h1, .h2, .h3 { font-family: var(--display); font-style: var(--d-it); font-stretch: var(--d-wd); }
+.h1 { margin: 0; font-weight: var(--d-w); font-size: calc(clamp(1.9rem, 7.4cqi, 3.7rem) * var(--d-sc)); line-height: 1.06; letter-spacing: var(--d-tr); rotate: -2.5deg; transform-origin: left center; text-wrap: balance; }
+.h1:focus { outline: none; }
+.strong { position: relative; isolation: isolate; display: inline-block; color: var(--mark-ink); padding: .02em .2em .1em; white-space: nowrap; }
+.strong svg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; }
+.strong polygon { fill: var(--mark); }
+.h2 { margin: 0; font-weight: var(--d-w); font-size: calc(clamp(1.6rem, 5cqi, 2.5rem) * var(--d-sc)); line-height: 1.05; letter-spacing: calc(var(--d-tr) + .005em); rotate: -2.5deg; transform-origin: left center; }
+.h3 { margin: 0 0 .4rem; font-weight: var(--d-w2); font-size: calc(1.35rem * var(--d-sc)); line-height: 1.15; letter-spacing: calc(var(--d-tr) + .02em); }
+.copy { display: grid; gap: 1rem; max-width: 62ch; }
+
+/* Frames: an angled plate sits behind each picture; the picture itself and all body text stay straight */
+.frame { position: relative; isolation: isolate; margin: 0; padding: max(5%, 34px) max(6%, 30px); margin-left: var(--x, 0); }
+.frame::before, .proj-art::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; background: var(--paper-2);
+  clip-path: var(--clip, polygon(4% 0, 100% 0, 96% 100%, 0 100%)); rotate: var(--r, -2deg);
+}
+/* Plate shapes, so neighboring frames never repeat one outline. Cuts, steps and wedges are fixed sizes, so they stay small on tall frames and never reach into the picture */
+.shape-lean { --clip: polygon(0 0, 96% 0, 100% 100%, 4% 100%); }
+.shape-quad { --clip: polygon(2% 14px, 100% 0, 97% calc(100% - 12px), 0 100%); }
+.shape-cut { --clip: polygon(3% 0, calc(100% - 44px) 0, 100% 40px, 97% 100%, 0 calc(100% - 10px)); }
+.shape-step { --clip: polygon(0 10px, 58% 0, calc(58% + 10px) 14px, 100% 6px, 98% 100%, 2% calc(100% - 10px)); }
+.shape-wedge { --clip: polygon(0 18px, 100% 0, 100% 100%, 3% calc(100% - 16px)); }
+.shape-chamfer { --clip: polygon(36px 0, 100% 0, 100% calc(100% - 32px), calc(100% - 36px) 100%, 0 100%, 0 32px); }
+/* A second plate in the sidebar color peeks out from behind a few frames, tilted against the first */
+.layered::after, .proj-art::after {
+  content: ""; position: absolute; inset: 6% -2.5% -3.5% 7%; z-index: -2; background: var(--plate);
+  clip-path: polygon(0 4%, 100% 0, 96% 100%, 3% 95%); rotate: calc(var(--r, -2deg) * -1);
+}
+.frame img { width: 100%; }
+.note { margin-top: .7rem; font: 400 .68rem/1.5 var(--mono); color: var(--ink-2); }
+
+/* Home */
+.intro { display: grid; grid-template-columns: minmax(0, 12rem) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: center; }
+/* The headshot fills an angular frame: the upright photo is cut to an irregular five-sided shard, kinked along the top with inward-slanting sides */
+.portrait { margin: 0; }
+.portrait img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; clip-path: polygon(0 4%, 68% 0, 100% 7%, 95% 100%, 5% 95%); }
+.intro-text { display: grid; gap: 1.1rem; justify-items: start; min-width: 0; }
+.projects { display: grid; gap: 2.4rem; }
+.proj { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); gap: clamp(1.25rem, 3.5vw, 2.5rem); align-items: center; margin-left: var(--x); }
+/* Every project card wears the stepped plate with a sidebar-color plate peeking out behind it */
+.proj-art { position: relative; isolation: isolate; display: block; padding: 10% 12%; --r: 2deg; --clip: polygon(0 10px, 58% 0, calc(58% + 10px) 14px, 100% 6px, 98% 100%, 2% calc(100% - 10px)); transition: translate 150ms cubic-bezier(.16, 1, .3, 1); }
+.proj-art:hover { translate: 0 -3px; }
+.proj-art img { height: 8.5rem; width: 100%; object-fit: contain; }
+.proj-body { display: grid; gap: .5rem; justify-items: start; min-width: 0; }
+/* The card title is the card's link; the art above is the same link for the mouse. Hovering either one answers on the other */
+.proj-link { text-decoration: none; }
+@media (hover: hover) {
+  .proj-link:hover, .proj:has(.proj-art:hover) .proj-link { text-decoration: underline; text-decoration-thickness: .1em; text-underline-offset: .18em; }
+  .proj:has(.proj-link:hover) .proj-art { translate: 0 -3px; }
+}
+/* Placeholder art for projects still to come */
+.ph-art { height: 8.5rem; display: grid; place-items: center; padding: .5rem; border: 2px dashed color-mix(in oklab, var(--ink) 28%, transparent); color: var(--ink-2); font: 400 .72rem/1.4 var(--mono); text-align: center; }
+.frame .ph-art { height: auto; aspect-ratio: 4 / 3; }
+
+/* Project pages */
+.split { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: start; }
+.split > * { min-width: 0; }
+.stack { display: grid; gap: 1.6rem; }
+.reel { position: relative; }
+.reel .play { position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; translate: -50% -60%; background: var(--plate); clip-path: polygon(0 0, 100% 50%, 0 100%); opacity: .88; }
+
+/* Resume */
+.resume { display: grid; gap: 1.6rem; justify-items: start; max-width: 54rem; }
+.resume .frame { width: min(100%, 40rem); }
+
+/* Phones: the sidebar becomes a sticky top band with the same bars */
+@media (max-width: 760px) {
+  .side { width: auto; justify-self: stretch; align-self: start; grid-template-rows: none; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: .9rem; padding: 14px 16px 26px; clip-path: polygon(0 0, 100% 0, 100% 78%, 0 100%); }
+  .mark { font-size: calc(1.25rem * var(--d-sn)); }
+  .nav { align-self: auto; }
+  .nav-list { display: flex; flex-wrap: wrap; gap: .45rem .55rem; justify-content: flex-end; }
+  .nav-bar { margin-left: 0; font-size: calc(.92rem * var(--d-sn)); padding: .55em .95em .55em .8em; }
+  .nav-cursor, .side-foot { display: none; }
+  .page { padding-left: 0; padding-right: 0; padding-top: var(--side-h, 7.5rem); padding-bottom: 64px; }
+}
+
+@container (max-width: 44rem) {
+  .intro, .proj, .split { grid-template-columns: minmax(0, 1fr); }
+  .portrait { width: 10rem; }
+  .proj, .frame { margin-left: 0; }
+}
+
+/* Wide page areas: project cards sit side by side, art above text, every second card dropped a step lower */
+@container (min-width: 60rem) {
+  .projects { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(2rem, 4cqi, 4rem); align-items: start; }
+  .proj { grid-template-columns: minmax(0, 1fr); margin-left: 0; }
+  .proj:nth-child(even) { margin-top: 3.5rem; }
+  .proj-art { width: min(100%, 24rem); }
+  .proj-art img, .proj-art .ph-art { height: 10.5rem; }
+}
+
+
+/* Slide deck: a carousel in the menu's grammar. The slide sits straight on an angled plate, slides change with a stepped diagonal wipe led by an accent slash, the current tick stamps in with the menu's jittering plate, and a click opens the deck full screen behind the page-change blot */
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.deck-split { display: grid; gap: clamp(1.5rem, 4vw, 3rem); align-items: start; }
+@container (min-width: 52rem) { .deck-split { grid-template-columns: minmax(16rem, 23rem) minmax(0, 1fr); } }
+@container (min-width: 68rem) { .deck-split { grid-template-columns: minmax(16rem, 26rem) minmax(0, 1fr); } }
+/* On a desktop screen the Cava and Power Creep pages fit without scrolling, so their bottom margin is shorter */
+@media (min-width: 761px) { .page-inner.fit { padding-bottom: clamp(24px, 4vh, 48px); } }
+.deck { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; min-width: 0; max-width: min(100%, calc(var(--deck-h, 50dvh) * var(--deck-ar, 16 / 9) + 4.5rem)); }
+/* A portrait document uses the same viewer; its pages take the height the screen has left after the heading (its measured height, --head-h) and the controls */
+.deck-portrait { --deck-ar: 612 / 792; --deck-h: max(22rem, calc(100dvh - 18rem - var(--head-h, 4rem))); }
+/* On shorter screens the narrower viewer wraps its ticks to a second row, so the page gets less height */
+@media (max-height: 60rem) { .deck-portrait { --deck-h: max(18rem, calc(100dvh - 21.5rem - var(--head-h, 4rem))); } }
+.deck-stage { position: relative; isolation: isolate; padding: clamp(14px, 2.4%, 30px) clamp(16px, 2.8%, 34px); --r: -1deg; }
+.deck-stage::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--paper-2); clip-path: polygon(1.5% 0, 100% 0, 98.5% 100%, 0 100%); rotate: var(--r); }
+.deck-open, .lb-shot { position: relative; display: block; width: 100%; aspect-ratio: var(--deck-ar, 16 / 9); overflow: hidden; padding: 0; border: 0; background: var(--paper); touch-action: pan-y; }
+.deck-open { cursor: zoom-in; }
+.deck-open img, .lb-shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.deck-open:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
+.deck-slash { position: absolute; top: -8%; bottom: -8%; left: 0; width: 26px; z-index: 2; background: var(--accent); transform: translateX(-50%) skewX(-14deg); opacity: 0; pointer-events: none; }
+.deck-zoom { position: absolute; right: 0; bottom: 0; z-index: 3; display: grid; place-items: center; width: 46px; height: 40px; background: var(--accent); color: var(--accent-ink); clip-path: polygon(16% 0, 100% 0, 100% 100%, 0 100%); transition: translate 150ms cubic-bezier(.16, 1, .3, 1); }
+.deck-zoom svg { width: 18px; height: 18px; }
+@media (hover: hover) { .deck-open:hover .deck-zoom { translate: -2px -2px; } }
+
+.deck-bar, .lb-bar { display: flex; flex-wrap: wrap; align-items: center; gap: .7rem 1rem; }
+.deck-btn { display: grid; place-items: center; width: 54px; height: 44px; padding: 0; border: 0; cursor: pointer; background: var(--plate); color: var(--plate-ink); clip-path: polygon(12% 0, 100% 0, 88% 100%, 0 100%); transition: translate 150ms cubic-bezier(.16, 1, .3, 1); }
+.deck-btn .arrow { width: 14px; height: 16px; background: currentColor; clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.deck-btn.prev .arrow { rotate: 180deg; }
+@media (hover: hover) { .deck-btn:hover { translate: 0 -2px; } }
+.deck-btn:active { translate: 0 0; }
+.deck-btn:focus-visible { outline: none; background: var(--accent); color: var(--accent-ink); }
+.deck-count { min-width: 5.6em; margin: 0; font-family: var(--display); font-weight: var(--d-w, 900); font-stretch: var(--d-wd, 118%); font-size: 1.55rem; line-height: 1; font-variant-numeric: tabular-nums; rotate: -4deg; white-space: nowrap; }
+.deck-count b { color: var(--accent); }
+.deck-count span { font-size: .62em; color: var(--ink-2); }
+.deck-ticks { display: flex; flex-wrap: wrap; align-items: center; margin: 0; padding: 0; list-style: none; }
+.deck-tick { display: grid; place-items: center; width: 24px; height: 32px; padding: 0; border: 0; background: none; cursor: pointer; }
+.deck-tick i { width: 13px; height: 8px; background: color-mix(in srgb, var(--ink) 30%, transparent); clip-path: polygon(22% 0, 100% 0, 78% 100%, 0 100%); }
+@media (hover: hover) { .deck-tick:hover i { background: color-mix(in srgb, var(--ink) 60%, transparent); } }
+.deck-tick[aria-current="true"] i { width: 19px; height: 13px; background: var(--accent); clip-path: var(--jag, polygon(0 0, 100% 0, 100% 100%, 0 100%)); scale: 1.12; transition: scale 120ms var(--snap); }
+.deck-tick:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
+
+/* Full-screen deck */
+.lightbox { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: transparent; color: var(--ink); overflow: hidden; }
+.lightbox::backdrop { background: transparent; }
+.lb-blot { position: absolute; inset: 0; pointer-events: none; filter: url(#blot-wobble); }
+.lb-blot i { position: absolute; width: 10px; aspect-ratio: 1; border-radius: 50%; background: var(--blot); translate: -50% -50%; scale: 0; }
+.lb-inner { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; gap: clamp(.6rem, 2vh, 1.2rem); padding: clamp(12px, 2.5vw, 36px); background: var(--paper); }
+.lb-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.lb-title { margin: 0; min-width: 0; font: 700 .95rem/1.3 var(--body); color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-stage { container-type: size; display: grid; place-items: center; min-height: 0; }
+/* The slide stays fully inside its plate: the cut is a fixed size, and the padding covers the cut plus the tilt with room to spare */
+.lb-frame { --cut: 8px; --px: 16px; --py: 10px; position: relative; isolation: isolate; width: min(100cqw, (100cqh - 2 * var(--py)) * var(--deck-ar, 16 / 9) + 2 * var(--px)); padding: var(--py) var(--px); }
+@media (min-width: 900px) { .lb-frame { --cut: 16px; --px: 30px; --py: 20px; } }
+.lb-frame::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--paper-2); clip-path: polygon(var(--cut) 0, 100% 0, calc(100% - var(--cut)) 100%, 0 100%); rotate: .6deg; }
+.lb-close { display: grid; place-items: center; flex: none; width: 54px; height: 44px; padding: 0; border: 0; cursor: pointer; background: var(--accent); color: var(--accent-ink); clip-path: polygon(12% 0, 100% 0, 88% 100%, 0 100%); }
+.lb-close svg { width: 18px; height: 18px; }
+.lb-close:focus-visible { outline: none; background: var(--plate); color: var(--plate-ink); }
+.lb-bar { justify-content: center; }
+
+@media (max-width: 760px) {
+  .deck-count { font-size: 1.3rem; }
+  .deck-ticks { order: 3; width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-bar, .nav-bar.is-on, .nav-bar.is-on .plate, .btn, .proj-art { transition: none; }
+  .pocket-icon { animation: none !important; }
+}
+
+/* ---------- Explorer panel: a neutral tool layer that never takes the palette it edits ---------- */
+.explorer {
+  --ui-bg: #fbfbfa; --ui-fg: #1b1c1e; --ui-muted: #63666c; --ui-line: #dcdcd8; --ui-well: #f1f1ee; --ui-sel: #1b1c1e; --ui-sel-ink: #fbfbfa;
+  --ui-ok: #1d6b3a; --ui-warn: #8a5a00; --ui-bad: #a3231b;
+  --ui-shadow: 0 10px 32px rgb(0 0 0 / .14), 0 2px 6px rgb(0 0 0 / .08);
+  position: fixed; z-index: 50; top: 12px; right: 12px; bottom: 12px; width: 328px;
+  display: grid; grid-template-rows: auto minmax(0, 1fr);
+  background: var(--ui-bg); color: var(--ui-fg); border: 1px solid var(--ui-line); border-radius: 6px; box-shadow: var(--ui-shadow);
+  font: 400 13px/1.4 system-ui, "Segoe UI", -apple-system, sans-serif;
+}
+.explorer[data-mode="dark"] {
+  --ui-bg: #1a1b1e; --ui-fg: #ececea; --ui-muted: #a4a7ad; --ui-line: #34363b; --ui-well: #232428; --ui-sel: #ececea; --ui-sel-ink: #1a1b1e;
+  --ui-ok: #6fd08f; --ui-warn: #f0bf5a; --ui-bad: #ff8a80;
+  --ui-shadow: 0 10px 32px rgb(0 0 0 / .5), 0 2px 6px rgb(0 0 0 / .35);
+  color-scheme: dark;
+}
+.explorer ::selection { background: var(--ui-sel); color: var(--ui-sel-ink); }
+.explorer :focus-visible { outline: 2px solid var(--ui-fg); outline-offset: 2px; }
+.explorer.is-closed { bottom: auto; grid-template-rows: auto; width: auto; }
+.explorer.is-closed .ex-body { display: none; }
+.ex-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 10px 10px 14px; border-bottom: 1px solid var(--ui-line); }
+.explorer.is-closed .ex-head { border-bottom: 0; padding: 6px; }
+.explorer.is-closed .ex-title { display: none; }
+.ex-title { margin: 0; font-size: 14px; font-weight: 650; letter-spacing: .01em; }
+.ex-toggle { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 10px; border: 1px solid var(--ui-line); border-radius: 4px; background: var(--ui-well); color: var(--ui-fg); font: inherit; cursor: pointer; }
+.ex-toggle svg { width: 14px; height: 14px; transition: rotate 160ms ease; }
+.explorer.is-closed .ex-toggle svg { rotate: 180deg; }
+.ex-body { overflow-y: auto; overscroll-behavior: contain; padding: 4px 14px 18px; display: grid; gap: 18px; align-content: start; scrollbar-width: thin; scrollbar-color: var(--ui-line) transparent; }
+.ex-sec { display: grid; gap: 8px; }
+.ex-sec > h3 { margin: 12px 0 0; font-size: 12.5px; font-weight: 650; color: var(--ui-fg); }
+.ex-hint { margin: 0; color: var(--ui-muted); font-size: 12px; }
+
+.opt-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.opt { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px 10px; text-align: left; border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--ui-fg); font: inherit; cursor: pointer; }
+.opt:hover { background: var(--ui-well); }
+.opt[aria-pressed="true"] { border-color: var(--ui-fg); background: var(--ui-well); }
+.opt-name { display: block; font-weight: 600; font-size: 13px; overflow-wrap: anywhere; }
+.opt-seed { display: block; color: var(--ui-muted); font-size: 11.5px; }
+.chips { display: flex; }
+.chips i { width: 16px; height: 22px; display: block; box-shadow: inset 0 0 0 1px rgb(127 127 127 / .28); }
+.chips i:first-child { border-radius: 3px 0 0 3px; }
+.chips i:last-child { border-radius: 0 3px 3px 0; }
+.type-opt { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+.type-face { display: block; font-size: 19px; line-height: 1.15; overflow-wrap: anywhere; }
+.type-body { display: block; font-size: 13px; color: var(--ui-muted); }
+
+.contrast { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.cbadge { display: grid; gap: 1px; padding: 7px 8px; border: 1px solid var(--ui-line); border-radius: 4px; font-variant-numeric: tabular-nums; }
+.cbadge b { font-size: 12px; font-weight: 600; }
+.cbadge span { font-size: 11.5px; color: var(--ui-muted); }
+.cbadge[data-grade="ok"] span { color: var(--ui-ok); }
+.cbadge[data-grade="large"] span { color: var(--ui-warn); }
+.cbadge[data-grade="bad"] span { color: var(--ui-bad); }
+
+details.tune { border: 1px solid var(--ui-line); border-radius: 4px; }
+details.tune > summary { min-height: 36px; display: flex; align-items: center; padding: 0 10px; cursor: pointer; font-weight: 600; list-style: none; }
+details.tune > summary::-webkit-details-marker { display: none; }
+details.tune > summary::before { content: ""; width: 0; height: 0; margin-right: 8px; border: 5px solid transparent; border-left-color: currentColor; border-right-width: 0; transition: rotate 150ms ease; }
+details.tune[open] > summary::before { rotate: 90deg; }
+.tune-body { display: grid; gap: 10px; padding: 4px 10px 12px; }
+.field { display: grid; gap: 4px; }
+.field > label, .field > .lbl { font-size: 12px; color: var(--ui-muted); }
+.crow { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 6px; align-items: center; }
+.crow input[type="color"] { width: 36px; height: 30px; padding: 0; border: 1px solid var(--ui-line); border-radius: 4px; background: none; cursor: pointer; }
+.explorer input[type="text"], .explorer select { width: 100%; min-height: 30px; padding: 0 8px; border: 1px solid var(--ui-line); border-radius: 4px; background: var(--ui-bg); color: var(--ui-fg); font: inherit; }
+.explorer input.hex { font: 12px/1 ui-monospace, "Cascadia Mono", Consolas, monospace; text-transform: lowercase; }
+.explorer input[aria-invalid="true"] { border-color: var(--ui-bad); }
+.frow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+.explorer input[type="range"] { width: 100%; accent-color: var(--ui-fg); }
+.rlabel { display: flex; justify-content: space-between; font-size: 12px; color: var(--ui-muted); font-variant-numeric: tabular-nums; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.status { margin: 0; min-height: 1em; font-size: 12px; color: var(--ui-muted); }
+.status[data-tone="bad"] { color: var(--ui-bad); }
+
+.ubtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; padding: 0 12px; border: 1px solid var(--ui-line); border-radius: 4px; background: var(--ui-well); color: var(--ui-fg); font: inherit; font-weight: 600; cursor: pointer; }
+.ubtn:hover { border-color: var(--ui-fg); }
+.ubtn.primary { background: var(--ui-sel); color: var(--ui-sel-ink); border-color: var(--ui-sel); }
+.ubtn svg { width: 14px; height: 14px; }
+.ubtn.small { min-height: 28px; padding: 0 8px; font-size: 12px; font-weight: 500; }
+.ubtn:disabled { opacity: .5; cursor: default; }
+.actions { display: grid; grid-template-columns: 1fr auto; gap: 6px; }
+.fav-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.fav { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 10px; align-items: center; padding: 8px; border: 1px solid var(--ui-line); border-radius: 4px; }
+.fav-text { min-width: 0; }
+.fav-text b { display: block; font-size: 12.5px; overflow-wrap: anywhere; }
+.fav-text span { display: block; font-size: 11.5px; color: var(--ui-muted); }
+.fav-btns { grid-column: 1 / -1; display: flex; gap: 6px; }
+.empty { margin: 0; padding: 10px; border: 1px dashed var(--ui-line); border-radius: 4px; color: var(--ui-muted); font-size: 12px; }
+
+@media (min-width: 1100px) {
+  html.panel-open { --panel-w: 352px; }
+}
+@media (max-width: 760px) {
+  .explorer { top: auto; left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); width: auto; height: min(72vh, 640px); }
+  .explorer.is-closed { left: auto; height: auto; }
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <filter id="blot-wobble" x="-20%" y="-20%" width="140%" height="140%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="7"/>
+    <feDisplacementMap in="SourceGraphic" scale="46" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+
+<div class="site">
+  <aside class="side">
+    <a class="mark" href="#home" aria-label="David Doctor, home">David<br>Doctor</a>
+    <nav class="nav" aria-label="Main">
+      <ul class="nav-list">
+        <li><a class="nav-bar" href="#home" data-page="home" style="--x:.6rem;--r:-4deg"><svg class="plate" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,0 100,0 100,100 0,100"/></svg>Home</a></li>
+        <li><a class="nav-bar" href="#brew" data-page="brew" style="--x:.15rem;--r:-7deg"><svg class="plate" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,0 100,0 100,100 0,100"/></svg>Doctor's Brew</a></li>
+        <li><a class="nav-bar" href="#bufflife" data-page="bufflife" style="--x:.95rem;--r:-3deg"><svg class="plate" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,0 100,0 100,100 0,100"/></svg>Buff Life</a></li>
+        <li><a class="nav-bar" href="#project3" data-page="project3" style="--x:.1rem;--r:-6deg"><svg class="plate" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,0 100,0 100,100 0,100"/></svg>Cava Cognition</a></li>
+        <li><a class="nav-bar" href="#project4" data-page="project4" style="--x:1.05rem;--r:-8deg"><svg class="plate" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,0 100,0 100,100 0,100"/></svg>Power Creep</a></li>
+        <li><a class="nav-bar" href="#project5" data-page="project5" style="--x:.35rem;--r:-4deg"><svg class="plate" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,0 100,0 100,100 0,100"/></svg>Roam Ready</a></li>
+        <li><a class="nav-bar" href="#resume" data-page="resume" style="--x:.75rem;--r:-7deg"><svg class="plate" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,0 100,0 100,100 0,100"/></svg>Resume</a></li>
+      </ul>
+      <div class="nav-cursor" aria-hidden="true"><span class="tri"></span></div>
+    </nav>
+    <div class="side-foot">
+      <span class="pocket pocket-up"><svg class="pocket-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill-rule="evenodd" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg><a class="btn btn-big on-plate" href="https://www.linkedin.com/in/davidrdoctor/" target="_blank" rel="noopener">My LinkedIn</a></span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <section class="page" data-page="home" aria-labelledby="h-home">
+      <div class="page-inner">
+        <div class="intro">
+          <figure class="portrait" data-in style="margin:0"><img src="media/headshot.jpg" width="400" height="500" alt="Headshot of David Doctor"></figure>
+          <div class="intro-text">
+            <h1 class="h1" id="h-home" tabindex="-1" data-in>Hey! I'm <span class="strong"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="2,8 99,0 97,100 0,90"/></svg>David Doctor</span></h1>
+            <p class="copy" data-in>I'm a designer, developer, and analyst studying Information Science at the University of Colorado Boulder. Here are my projects that reflect my interests in branding, UI design, and digital experiences.</p>
+            <span class="pocket pocket-right" data-in><svg class="pocket-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill-rule="evenodd" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg><a class="btn btn-big" href="https://www.linkedin.com/in/davidrdoctor/" target="_blank" rel="noopener">My LinkedIn</a></span>
+          </div>
+        </div>
+
+        <h2 class="h2" data-in>Projects</h2>
+        <div class="projects">
+          <article class="proj" style="--x:0%" aria-labelledby="t-brew" data-in>
+            <a class="proj-art" href="#brew" tabindex="-1" aria-hidden="true"><img src="media/brew-logo.png" width="800" height="466" alt="Doctor's Brew Logo"></a>
+            <div class="proj-body">
+              <h3 class="h3" id="t-brew"><a class="proj-link" href="#brew">Package Design</a></h3>
+              <p>Box, bottle, and branding designs for a specialty pepper beer inspired by Filipino culture.</p>
+            </div>
+          </article>
+          <article class="proj" style="--x:6%" aria-labelledby="t-buff" data-in>
+            <a class="proj-art" href="#bufflife" tabindex="-1" aria-hidden="true"><img src="media/buff-life-logo.png" width="800" height="601" alt="Buff Life Logo"></a>
+            <div class="proj-body">
+              <h3 class="h3" id="t-buff"><a class="proj-link" href="#bufflife">App Design</a></h3>
+              <p>A mobile app concept designed to help CU Boulder students manage schedules, events, and campus life.</p>
+            </div>
+          </article>
+          <article class="proj" style="--x:0%" aria-labelledby="t-p3" data-in>
+            <a class="proj-art" href="#project3" tabindex="-1" aria-hidden="true"><img src="media/cava-logo.png" width="736" height="414" alt="The Distributed Cognition of CAVA Logo"></a>
+            <div class="proj-body">
+              <h3 class="h3" id="t-p3"><a class="proj-link" href="#project3">User Research</a></h3>
+              <p>A deep analysis on how information moves physically and cognitively at Cava Grill.</p>
+            </div>
+          </article>
+          <article class="proj" style="--x:6%" aria-labelledby="t-p4" data-in>
+            <a class="proj-art" href="#project4" tabindex="-1" aria-hidden="true"><img src="media/power-creep-logo.png" width="1020" height="611" alt="Power Creep In Pokémon Trading Card Game Logo"></a>
+            <div class="proj-body">
+              <h3 class="h3" id="t-p4"><a class="proj-link" href="#project4">Data Analysis</a></h3>
+              <p>A Python data analysis of how much stronger Pokémon cards have gotten from 1999 to 2024.</p>
+            </div>
+          </article>
+          <article class="proj" style="--x:0%" aria-labelledby="t-p5" data-in>
+            <a class="proj-art" href="#project5" tabindex="-1" aria-hidden="true"><span class="ph-art">Project image coming soon</span></a>
+            <div class="proj-body">
+              <h3 class="h3" id="t-p5"><a class="proj-link" href="#project5">Roam Ready</a></h3>
+              <p>Senior Capstone Placeholder</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" data-page="brew" aria-labelledby="h-brew">
+      <div class="page-inner">
+        <h1 class="h1" id="h-brew" tabindex="-1" data-in>Brewed With Real <span class="strong"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="1,10 100,0 98,100 0,92"/></svg>Labuyo Peppers</span></h1>
+        <div class="split">
+          <div class="stack">
+            <div class="copy" data-in>
+              <p>Whether its to wind down after a long day or to spice up a great party, Doctor's Brew is the perfect drink for any occasion. A family recipe passed down generations throughout the Philippines, this specialty brew is carefully crafted using real Saling Labuyo peppers, preserving the unique sweet and sour taste while toning down the spice.</p>
+              <p>This was a package design project of a fictional beer company that I came up with. Using inspiration from hot sauces packaging, old time shipping companies, and the culture of the Philippines I created bottle and case designs.</p>
+            </div>
+            <figure class="frame shape-quad" style="--r:-2deg" data-in><img src="media/brew-box-render.jpg" width="1000" height="750" alt="Front box design for Doctor's Brew"></figure>
+          </div>
+          <figure class="frame shape-lean" style="--r:1.5deg;--x:4%" data-in><img src="media/brew-dieline.jpg" width="1000" height="1700" alt="3D rendered image for Doctor's Brew"></figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" data-page="bufflife" aria-labelledby="h-buff">
+      <div class="page-inner">
+        <h1 class="h1" id="h-buff" tabindex="-1" data-in>An <span class="strong"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="3,6 100,0 96,100 0,94"/></svg>All-In-One</span><br> Student Life App</h1>
+        <div class="split">
+          <div class="stack">
+            <div class="copy" data-in>
+              <p>Schedules, grades, events, clubs, there's plenty to keep track of during your college career. Buff Life makes it just a little bit easier for you to quickly check any information you need at a moments notice while promoting the various activities around campus to wind down.</p>
+              <p>This project was inspired by the many issues with CU Boulder's mobile version of its current student portal. Not having an app and remaining on the mobile browser, the UI remained largely unchanged. There were many times I and many others had to frantically login and search through the website to find the info I needed before a class or exam. I created this prototype to make the UI cleaner and stylistic while giving students the info they need fast.</p>
+            </div>
+            <figure class="frame reel shape-chamfer" style="--r:-1.5deg" data-in>
+              <img src="media/buff-life-reel-poster.jpg" width="1280" height="720" alt="Frame from the Buff Life captioned reel">
+              <span class="play" aria-hidden="true"></span>
+              <figcaption class="note">On the live site the 2:24 captioned reel plays here; this demo shows its preview frame.</figcaption>
+            </figure>
+          </div>
+          <figure class="frame shape-wedge layered" style="--r:1.5deg;--x:6%" data-in><img src="media/buff-life-screen.png" width="462" height="888" alt="Buff Life app design"></figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" data-page="project3" aria-labelledby="h-p3">
+      <div class="page-inner fit">
+        <h1 class="h1" id="h-p3" tabindex="-1" data-in>A Fast Casual Business <span class="strong"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="2,8 99,0 97,100 0,90"/></svg>Analysis</span></h1>
+        <div class="deck-split">
+          <div class="copy" data-in>
+            <p>How does a fast-casual restaurant like Cava design the flow of information to keep things efficient for both the consumer and the employee? Between the assembly line, the menus, and the signs around the store, everything is set up so you can go from the door to your bowl without anyone having to explain a thing.</p>
+            <p>This was a research project for my Information Ecosystems class, where I looked at a fast casual restaurant as an information system. I visited during the dinner rush and again in the afternoon, took pictures, sketched a map of the store, and ordered my own bowl to see the whole process from the customer's side. Using distributed cognition, I broke down how the space, the staff, and the timing all work together to keep the line moving.</p>
+          </div>
+        <div class="deck" data-in role="region" aria-roledescription="carousel" aria-label="Cava Grill Analysis slides" data-deck="cava" data-src="media/cava-slide-{n}.jpg">
+          <div class="deck-stage layered">
+            <button class="deck-open" type="button" aria-label="View slide 1 of 19 full screen">
+              <img src="media/cava-slide-01.jpg" width="1600" height="900" alt="">
+              <span class="deck-slash" aria-hidden="true"></span>
+              <span class="deck-zoom" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M12 3h5v5M8 17H3v-5M17 3l-5.5 5.5M3 17l5.5-5.5"/></svg></span>
+            </button>
+          </div>
+          <div class="deck-bar">
+            <button class="deck-btn prev" type="button" aria-label="Previous slide"><span class="arrow"></span></button>
+            <p class="deck-count" aria-hidden="true"><b>01</b> <span>/ 19</span></p>
+            <button class="deck-btn next" type="button" aria-label="Next slide"><span class="arrow"></span></button>
+            <ol class="deck-ticks" aria-label="Jump to a slide"></ol>
+          </div>
+          <p class="sr-only deck-status" aria-live="polite"></p>
+          <div class="sr-only deck-text-body"></div>
+        </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" data-page="project4" aria-labelledby="h-p4">
+      <div class="page-inner fit">
+        <h1 class="h1" id="h-p4" tabindex="-1" data-in>It's... A Little <span class="strong"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="1,7 100,0 97,96 0,100"/></svg>Too</span> Effective?</h1>
+        <div class="deck-split">
+          <div class="copy" data-in>
+            <p>More health, more damage, more powerful abilities. Every new expansion of the Pokémon Trading Card Game gives you a reason to buy in, but it also pushes older cards further out of the game. It's called power creep, a common game design trap, and it got so bad that official tournaments only allow cards from the newest sets.</p>
+            <p>This was a final project for my Programming for Information Science class, where I used Python, Pandas, and Seaborn to measure just how strong the cards have gotten. I combined a CSV of every card from 1999 to 2023 with an API for the 2024 releases, then charted the highest HP card of each year by evolution stage. The strongest Basic card of 2024 has more than double the HP of the strongest Stage 2 card from 1999.</p>
+          </div>
+        <div class="deck deck-portrait" data-in role="region" aria-roledescription="carousel" aria-label="Power Creep in Pokémon TCG write-up pages" data-deck="power-creep" data-src="media/power-creep-page-{n}.jpg" data-unit="page">
+          <div class="deck-stage layered">
+            <button class="deck-open" type="button" aria-label="View page 1 of 6 full screen">
+              <img src="media/power-creep-page-01.jpg" width="1236" height="1600" alt="">
+              <span class="deck-slash" aria-hidden="true"></span>
+              <span class="deck-zoom" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"><path d="M12 3h5v5M8 17H3v-5M17 3l-5.5 5.5M3 17l5.5-5.5"/></svg></span>
+            </button>
+          </div>
+          <div class="deck-bar">
+            <button class="deck-btn prev" type="button" aria-label="Previous page"><span class="arrow"></span></button>
+            <p class="deck-count" aria-hidden="true"><b>01</b> <span>/ 06</span></p>
+            <button class="deck-btn next" type="button" aria-label="Next page"><span class="arrow"></span></button>
+            <ol class="deck-ticks" aria-label="Jump to a page"></ol>
+          </div>
+          <p class="sr-only deck-status" aria-live="polite"></p>
+          <div class="sr-only deck-text-body"></div>
+        </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" data-page="project5" aria-labelledby="h-p5">
+      <div class="page-inner">
+        <h1 class="h1" id="h-p5" tabindex="-1" data-in>Roam <span class="strong"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="2,8 99,0 97,100 0,90"/></svg>Ready</span></h1>
+        <div class="split">
+          <div class="copy" data-in><p>Senior Capstone Placeholder</p></div>
+          <figure class="frame shape-cut" style="--r:-1.5deg" data-in><span class="ph-art">Project image coming soon</span></figure>
+        </div>
+      </div>
+    </section>
+    <section class="page" data-page="resume" aria-label="Resume">
+      <div class="page-inner resume">
+        <a class="btn" href="resume.pdf" target="_blank" rel="noopener" data-focus data-in>Download Resume</a>
+        <figure class="frame shape-step" style="--r:-1.5deg" data-in><img src="media/resume-preview.png" width="1300" height="1682" alt="David Doctor's Resume"></figure>
+      </div>
+    </section>
+
+    <div class="ink" aria-hidden="true"><i></i></div>
+  </main>
+</div>
+
+<aside class="explorer" id="explorer" aria-label="Colors and type explorer" data-mode="dark">
+  <div class="ex-head">
+    <h2 class="ex-title">Colors &amp; type</h2>
+    <button class="ex-toggle" id="ex-toggle" type="button" aria-expanded="true" aria-controls="ex-body">
+      <span id="ex-toggle-label">Hide</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
+    </button>
+  </div>
+  <div class="ex-body" id="ex-body">
+    <section class="ex-sec" aria-labelledby="s-pal">
+      <h3 id="s-pal">Palette</h3>
+      <ul class="opt-list" id="pal-list"></ul>
+      <div class="contrast" id="contrast" aria-live="polite"></div>
+      <details class="tune" id="tune-colors">
+        <summary>Fine-tune colors</summary>
+        <div class="tune-body" id="color-fields"></div>
+      </details>
+    </section>
+
+    <section class="ex-sec" aria-labelledby="s-type">
+      <h3 id="s-type">Fonts</h3>
+      <ul class="opt-list" id="type-list"></ul>
+      <details class="tune" id="tune-type">
+        <summary>Fine-tune fonts</summary>
+        <div class="tune-body">
+          <div class="field">
+            <label for="t-dname">Heading font (any Google Font)</label>
+            <div class="frow"><input type="text" id="t-dname" autocomplete="off" spellcheck="false"><button class="ubtn small" type="button" id="t-dload">Load</button></div>
+          </div>
+          <div class="field">
+            <label for="t-bname">Body font (any Google Font)</label>
+            <div class="frow"><input type="text" id="t-bname" autocomplete="off" spellcheck="false"><button class="ubtn small" type="button" id="t-bload">Load</button></div>
+          </div>
+          <p class="status" id="t-status" aria-live="polite"></p>
+          <div class="field">
+            <div class="rlabel"><label for="t-w">Heading weight</label><output id="o-w" for="t-w"></output></div>
+            <input type="range" id="t-w" min="100" max="900" step="100">
+          </div>
+          <div class="field">
+            <div class="rlabel"><label for="t-wd">Heading width</label><output id="o-wd" for="t-wd"></output></div>
+            <input type="range" id="t-wd" min="75" max="150" step="1">
+            <p class="ex-hint">Only fonts with a width axis respond: Archivo, Mona Sans, Anybody, Saira.</p>
+          </div>
+          <div class="field">
+            <div class="rlabel"><label for="t-sc">Heading size</label><output id="o-sc" for="t-sc"></output></div>
+            <input type="range" id="t-sc" min="70" max="140" step="1">
+          </div>
+          <div class="field">
+            <div class="rlabel"><label for="t-bsc">Body size</label><output id="o-bsc" for="t-bsc"></output></div>
+            <input type="range" id="t-bsc" min="90" max="115" step="1">
+          </div>
+          <label class="check"><input type="checkbox" id="t-it"> Italic headings</label>
+        </div>
+      </details>
+    </section>
+
+    <section class="ex-sec" aria-labelledby="s-fav">
+      <h3 id="s-fav">Favorites</h3>
+      <div class="actions">
+        <button class="ubtn primary" type="button" id="fav-save">
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1.6l1.9 4 4.4.5-3.3 3 .9 4.3L8 11.3l-3.9 2.1.9-4.3-3.3-3 4.4-.5z"/></svg>
+          Save this combo
+        </button>
+        <button class="ubtn" type="button" id="fav-copy">Copy for Claude</button>
+      </div>
+      <p class="status" id="fav-status" aria-live="polite"></p>
+      <ul class="fav-list" id="fav-list"></ul>
+    </section>
+  </div>
+</aside>
+
+<dialog class="lightbox" id="lb-cava" aria-label="Cava Grill Analysis, full screen">
+  <div class="lb-blot" aria-hidden="true"><i></i></div>
+  <div class="lb-inner">
+    <div class="lb-top">
+      <p class="deck-count" aria-hidden="true"><b>01</b> <span>/ 19</span></p>
+      <p class="lb-title"></p>
+      <button class="lb-close" type="button" aria-label="Close full screen view"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="square"><path d="M4 4l12 12M16 4L4 16"/></svg></button>
+    </div>
+    <div class="lb-stage">
+      <div class="lb-frame">
+        <div class="lb-shot">
+          <img src="media/cava-slide-01.jpg" width="1600" height="900" alt="">
+        </div>
+      </div>
+    </div>
+    <div class="lb-bar">
+      <button class="deck-btn prev" type="button" aria-label="Previous slide"><span class="arrow"></span></button>
+      <ol class="deck-ticks" aria-label="Jump to a slide"></ol>
+      <button class="deck-btn next" type="button" aria-label="Next slide"><span class="arrow"></span></button>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="lightbox deck-portrait" id="lb-power-creep" aria-label="Power Creep in Pokémon TCG, full screen">
+  <div class="lb-blot" aria-hidden="true"><i></i></div>
+  <div class="lb-inner">
+    <div class="lb-top">
+      <p class="deck-count" aria-hidden="true"><b>01</b> <span>/ 06</span></p>
+      <p class="lb-title"></p>
+      <button class="lb-close" type="button" aria-label="Close full screen view"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="square"><path d="M4 4l12 12M16 4L4 16"/></svg></button>
+    </div>
+    <div class="lb-stage">
+      <div class="lb-frame">
+        <div class="lb-shot">
+          <img src="media/power-creep-page-01.jpg" width="1236" height="1600" alt="">
+        </div>
+      </div>
+    </div>
+    <div class="lb-bar">
+      <button class="deck-btn prev" type="button" aria-label="Previous page"><span class="arrow"></span></button>
+      <ol class="deck-ticks" aria-label="Jump to a page"></ol>
+      <button class="deck-btn next" type="button" aria-label="Next page"><span class="arrow"></span></button>
+    </div>
+  </div>
+</dialog>
+<script type="application/json" id="deck-data-cava">
+[
+{"title":"The Distributed Cognition of CAVA","heading":"The Distributed Cognition of CAVA","alt":"Title slide: The Distributed Cognition of CAVA, a fast casual business analysis by David Doctor, beside a CAVA bowl","html":"<p>A Fast Casual Business Analysis</p><p>By David Doctor</p>"},
+{"title":"Project Overview: Why CAVA? and Expectations","heading":"Project Overview","html":"<h3>Why CAVA?</h3><p>I chose this fast casual restaurant as it was and still is a favorite establishment for me to eat at. Cooking and assembly of the bowl is done in front of the customer so it’s also very easy to analyze all the operations within the restaurant.</p><h3>Expectations</h3><p>As I’ve been here many times before I already know how the ordering process works. Kind of like Chipotle and Qdoba, this place uses an assembly line type of system where you work your way down through various toppings to create your bowl and receive your food at the end of the line where the cashier rings you up.</p>"},
+{"title":"Project Overview: what they produce, the task observed, and my role","heading":"Project Overview","html":"<h3>What do they produce?</h3><p>Cava Grill makes custom made Mediterranean bowls with in-house made drinks, sides, and desserts. They offer catering services and delivery as well</p><h3>What task did I observe?</h3><p>I observed how orders were made, how signs convey information to both staff and customers, and how cooks and team members manage their workspace.</p><h3>What was my role in the information system?</h3><p>My role in the information system was the customer. Just like everyone else, I ordered my own custom bowl and ate it in store, although I have noticed that most people do tend to take-out</p>"},
+{"title":"Research Method","heading":"Research Method","html":"<h3>Date &amp; Time</h3><p>I first visited Cava Grill on a weekday at around 6PM as this was around dinner time and I would be able to see how it can operate during peak hours and plenty of staff and customers. I visited the establishment on Tuesday February 11th 6PM, and a second time on February 12th at 3PM.</p><h3>Observation Method</h3><p>I was able to take and enjoy my own order while taking pictures of the establishment. I also walked around and sketched out a map. Unfortunately they did not allow me to go into the back to take more pictures.</p><h3>Data Generated</h3><p>I took pictures, sketched a map, and ordered from the restaurant</p>"},
+{"title":"Research Data","heading":"Research Data","alt":"Section slide: Research Data, beside a CAVA meal tray","html":"<p>Section divider.</p>"},
+{"title":"Layout","heading":"Layout","alt":"Layout slide: a photo of the assembly line beside a hand-sketched floor map of the restaurant","html":"<p>A photo of the assembly line beside a hand-sketched floor map of the restaurant.</p>"},
+{"title":"Entrance","heading":"Entrance","html":"<p>Entering immediately shows you the ordering counter and the menu, or if you want to meet up with friends or pick up an order, you can walk straight ahead and head to those areas of the store</p><p>This corner is specifically for when there’s a long line and allows people to form a queue on their own, the barrier is permanent and conveys the information of being used for a queue. The drinks on the side also allows people to grab a drink while waiting in line.</p>"},
+{"title":"Menu","heading":"Menu","html":"<p>The menu has two parts, the Chef-Curated and Build Your Own. The Chef Curated section of the menu shows both Pita and Bowl options, with the name of the item, the price, calorie count, and description of the item. It of course, separates the menu by Bowl and Pita. The Build Your Own section shows the price, allows you to pick your base and shows what the steps are to building your dish. Along the assembly line there are mini menus that show what your options are for dips, meats, etc. Each topping has calorie information, spice level, description, and a fun-fact about pronunciation.</p>"},
+{"title":"Pickup","heading":"Pickup","html":"<p>The Pickup Shelf is clearly marked with yellow signage and stickers along the nearby pillar. The shelf is then split into two sections, one for pickup and another for delivery where GrubHub and other drivers can grab their orders without asking. There is also additional information posted on paper for the delivery drivers in the event that delivery orders aren’t on the shelf. The papers are in both English and Spanish</p>"},
+{"title":"Employee Guides","heading":"Employee Guides","html":"<p>Unfortunately I was unable to get behind the counter to gather more insight on the employee guides scattered around the kitchen but based off what I was able to infer from investigating from the front, employees are given a daily roster to keep track of shifts during the day, a mid-day checklist to keep track of tasks (this also implies that there’s a checklist for evening and morning shifts), and various laminated cards to help employees to build or prep certain dishes</p>"},
+{"title":"Analysis","heading":"Analysis","alt":"Section slide: Analysis, beside two CAVA drinks","html":"<p>Section divider.</p>"},
+{"title":"What is being produced","heading":"What is being produced","html":"<h3>What is the main task being accomplished?</h3><p>The main task here is custom Mediterranean bowls. Each customer has the option to build their own bowl from a variety of options for toppings or pick from a pre-set bowl on the menu. Drinks and sides like pita bread are also available at request</p>"},
+{"title":"Social Space","heading":"Social Space","html":"<h3>What is the division of labor to get it accomplished?</h3><ol><li>Customer enters and waits their turn in the queue space</li><li>Customer is greeted by a team member at the counter, where they are able to request which type of bowl they want</li><li>That team member adds the bowl’s base, dips, and meats before passing the bowl to the next team member</li><li>This team member puts on any additional toppings and dressings before checking out at the register</li><li>The customer can get any additional drinks or sides before paying and receiving their bowl</li></ol><h3>Who are the actors involved?</h3><p>Customers, cooks in the back, management, team members (the ones who ring you up and build your bowl)</p>"},
+{"title":"Physical Space: space arrangement","heading":"Physical Space","html":"<h3>Space Arrangement</h3><p>Entering through the front entrance you are immediately greeted with the food counter, easily able to walk up and get ordering right away, however if there is a line, you can easily take a right and enter the queue, which is marked by the barrier that allows the line to snake around the corner. From the entrance you can also see the Online Order shelf where you can quickly grab your food and leave. The entire establishment has a very linear design, first you order, then grab your drinks, then sit down with the very end of the restaurant having another exit and bathrooms.</p>"},
+{"title":"Artifact and people arrangement","heading":"Project Overview","html":"<h3>Artifact Arrangement</h3><p>There are a variety of artifacts scattered throughout the establishment that guide the customer through the motions of the restaurant, especially if it’s their first time. The big menu allows customers to quickly pick a premade bowl while those who want to build their own could easily see the smaller menus stuck on the glass screen so customers can look at the toppings on both the menu and physically in front of them. Various signs allow there to be no confusion around the store as well, such as distinguishing between trash and recycling or just general warnings to not take bags without permission and to wash your hands.</p><h3>People Arrangement</h3><p>The arrangement of the restaurant is designed in a way so that it’s quick and easy to navigate with few obstacles in the way. Tables and seats are along the walls so no one has to sidestep any tables. Employees are almost always only in the kitchen and assembly line so they’re usually not working out in the common areas unless for cleaning.</p>"},
+{"title":"Temporal Space","heading":"Temporal Space","html":"<h3>The Role of Timing</h3><p>Being a fast casual restaurant, it’s important to keep a constant flow of orders coming, hence the assembly line format they have. That’s why all toppings and food is already cooked and prepared by the cooks in the back, so the team members in the front can quickly add whatever they need to the order.</p><h3>Order of Events</h3><p>Ingredients will always be prepped ahead of time, even if all stations are stocked, cooks will keep the kitchen running smoothly in order to prevent toppings from running out. So the timeline will always go:</p><ol><li>Prep ingredients</li><li>Build dish</li><li>Hand out to customer</li><li>Clean</li><li>Repeat</li></ol>"},
+{"title":"How coordination happens","heading":"Physical Space","html":"<h3>How does coordination happen</h3><p>Not much communication really needs to be made amongst the employees, due to the assembly line fashion of the process, as long as each employee can rinse and repeat their routine then things go smoothly. Communication only really happens when passing an employee passes your bowl to the next and tells them if any extra charges should be added.</p>"},
+{"title":"Propagation of Representational States","heading":"Propagation of Representational States","html":"<h3>Preparation</h3><p>Customer: Customer peruses menu and decides what they want. Employee: Employees are prepping ingredients and maintaining kitchen</p><h3>Production begins</h3><p>Customer: Customer communicates order to employee. Employee: Employee receives order and assembles to customer’s wants</p><h3>Conclusion</h3><p>Customer: Customer pays and receives their dish. Customer can grab a drink, sit down, or leave to eat. Employee: Employee receives payment and hands dish to customer</p>"},
+{"title":"Derivation of Design","heading":"Derivation of Design","html":"<h3>Principle of Design</h3><p>The linear design of Cava is incredible in efficiency and aesthetic, the assembly line process can be new to many but the signs and guidelines strategically placed around the establishment allows newcomers to understand how everything works</p><h3>Recommendation</h3><p>As nice as the linear design of the establishment is, the massive pole stuck in the middle of the entire place does feel quite jarring. I understand that it’s part of the building’s structural integrity but it blocks off a path for customers to walk in and blocks out the view of the dining area from the entrance</p>"}
+]
+</script>
+<script type="application/json" id="deck-data-power-creep">
+[
+{"title":"Cover","heading":"Power Creep In Pokémon Trading Card Game","alt":"Cover: Power Creep In Pokémon Trading Card Game, David Doctor's final project write-up, over a spread of Pokémon cards","html":"<p>Power Creep In Pokémon Trading Card Game</p><p>David Doctor</p><p>Final Project Write Up</p>"},
+{"title":"Introduction","heading":"Introduction","html":"<p>The Pokemon Trading Card Game, also known as Pokemon TCG for short, has been around since 1999. With the Pokemon video games being so popular, the TCG also grew immensely. Soon enough, there were regional and international tournaments. People are hooked onto the addictive nature of collecting and battling Pokemon.</p><p>However, Pokemon TCG has been falling into a common game design trap that many other trading card and video games are known for called power creep. As more expansions and cards come out, the more powerful these new cards become. More health, more damage, powerful abilities, each new expansion would come with an incentive to buy and go for these new cards. This issue would make cards from the past so irrelevant that even official, competitive Pokemon TCG rules would adapt a cycle format where only cards found from the latest set could be used for tournament play.</p>"},
+{"title":"How Bad Is Power Creep?","heading":"How Bad Is Power Creep?","html":"<p>Hitting 25 years old this year, Pokemon TCG is growing fast. As new cards and mechanics are brought in and out of the competitive meta, let’s take a step back and see just how powerful these cards have gotten.</p><p>We’ll be examining the most powerful cards that were released every year, starting from 1999 all the way to 2024. How strong the card is will simply be determined by how large their hit points (HP) are, basically how much health a card has. The cards will also be split by evolution stage. There are three evolution stages: Basic, Stage 1, and Stage 2.</p><p>Three datasets will be used. A CSV file containing information of all cards released from 1999 - 2023 and an API that contains the latest card releases of this year, allowing us to gain a full picture of these card’s evolutions throughout the years. We will also use a CSV containing information about the set that these cards were released in and see how powerful each set of cards were.</p>"},
+{"title":"The Process","heading":"The Process","html":"<p>Like mentioned before, I had three sets of data. The card data CSV and API would work together will the set data CSV would be its own individual process. With the card data the process was to collect the necessary data from both of them (Name, Year Release, HP, Evolutionary Stage), and mash them into one dataframe that I would be able to create a cohesive graph with.</p><p>The CSV was quite easy to work with, Pandas was able to quickly make a dataframe where the only challenge was to separate the base evolutionary stage from the “subtypes” category as Pokemon can have more than one subtype. For example you can have a basic EX and so forth</p><p>The API was a little more difficult as this one was much more complex and expansive, with endpoints and page flipping being my worst enemy. Once I was able to navigate through it was just like the same process as the CSV. After they were both cleaned and ready, I combined them and my first visualization.</p><p>As for the second graph, the set data was simple to clean and get ready for the plot, it was making the plot that was the most difficult part. There just were too many sets for that one small graph to handle, despite my best effort to even trim the fat of some promotional sets, I will say I’m not very happy with how it turned out and I hope to do better next time. But it's all about learning and getting better.</p>"},
+{"title":"The Results: highest HP by year","heading":"The Results","alt":"The Results: a line chart of the highest HP each year from 1999 to 2024, with one line each for Basic, Stage 1 and Stage 2 Pokémon","html":"<p>Chart: the highest HP of each year's cards from 1999 to 2024, with one line each for Basic, Stage 1 and Stage 2. All three lines start between 100 and 120 HP in the early 2000s and climb unevenly. Basic peaks at 300 HP in 2017 and 2019, all three dip between 2020 and 2022, and Stage 1 and Stage 2 both reach 340 HP by 2024.</p><p>One look at this graph and its clear just how bad power creep has gotten in Pokemon TCG. The most powerful Basic Pokemon of this year more than doubles the most powerful Stage 2 Pokemon of 1999. Both Stage 1 and 2 Pokemon have reached almost 350 HP.</p><p>Although you can notice that there might have been an attempt to cut down and lower the power of cards between 2020 and 2023. This was during the Sword and Shield expansion, something that wasn’t too popular amongst players, maybe that’s why they doubled down and went even higher HP in the 2024, especially with the introduction of a new mechanic called Terra Pokemon.</p>"},
+{"title":"The Results: highest HP by set","heading":"The Results","alt":"The Results: a bar chart of the highest HP in each Pokémon TCG set, one bar per set","html":"<p>Chart: the highest HP in each card set, one bar per set ordered by set name, ranging from 60 to 340 HP. The McDonald's Collection promo sets sit among the lowest bars.</p><p>I understand it’s a hard graph to read but allow me to help guide you through it. You’ll notice a big inconsistency in power between sets. Most of the lowered powered sets are from promotional packs with McDonalds or other companies.</p><p>The ones that are higher are usually tied in with a Pokemon video game coming out around the same time. It’s clear how the Pokemon Company carefully select which sets are going to be more powerful based off what could get more of their property sold.</p>"}
+]
+</script>
+<script>
+/* Slide decks: each .deck[data-deck] is a carousel on the page with its own full-screen view (#lb-NAME), the two sharing one current slide. The slides' text comes from #deck-data-NAME */
+document.querySelectorAll('.deck[data-deck]').forEach((deck) => {
+  const name = deck.dataset.deck;
+  const lb = document.getElementById(`lb-${name}`);
+  const dataEl = document.getElementById(`deck-data-${name}`);
+  if (!lb || !dataEl) return;
+  /* The heading above can wrap, so a deck sized to the screen budgets for its measured height */
+  const head = deck.closest('.page-inner')?.querySelector('.h1');
+  if (head) new ResizeObserver(() => deck.style.setProperty('--head-h', `${head.offsetHeight}px`)).observe(head);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const slides = JSON.parse(dataEl.textContent);
+  const N = slides.length;
+  const unit = deck.dataset.unit || 'slide';
+  const Unit = unit[0].toUpperCase() + unit.slice(1);
+  const pad = (n) => String(n).padStart(2, '0');
+  const src = (i) => deck.dataset.src.replace('{n}', pad(i + 1));
+  const altOf = (i) => `${Unit} ${i + 1} of ${N}: ${slides[i].alt || slides[i].title}`;
+  let index = 0;
+
+  const lbStatus = document.createElement('p');
+  lbStatus.className = 'sr-only';
+  lbStatus.setAttribute('aria-live', 'polite');
+  lb.querySelector('.lb-inner').append(lbStatus);
+
+  const views = [
+    { root: deck, shot: deck.querySelector('.deck-open'), live: () => !lb.open },
+    { root: lb, shot: lb.querySelector('.lb-shot'), live: () => lb.open }
+  ];
+
+  /* Current tick: the menu's selected plate, corners re-randomized every 250ms within a small range */
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const jag = () => `polygon(${[[rand(0, 3), rand(0, 8)], [rand(97, 100), rand(0, 5)], [rand(97, 100), rand(92, 100)], [rand(0, 3), rand(90, 100)]]
+    .map(([x, y]) => `${x.toFixed(1)}% ${y.toFixed(1)}%`).join(', ')})`;
+
+  /* Slide change: on the page, the incoming slide wipes in along a leaning edge in six held frames, an accent slash riding the edge. Full screen cuts straight to the next slide */
+  const FROM = { 1: 'polygon(0% 0%, 0% 0%, -14% 100%, 0% 100%)', '-1': 'polygon(114% 0%, 100% 0%, 100% 100%, 100% 100%)' };
+  const TO = { 1: 'polygon(0% 0%, 114% 0%, 100% 100%, 0% 100%)', '-1': 'polygon(0% 0%, 100% 0%, 100% 100%, -14% 100%)' };
+  const wipe = async (v, i, dir) => {
+    if (v.state) v.state.done();
+    const base = v.shot.querySelector('img:not(.incoming)');
+    const alt = v.root === lb ? altOf(i) : '';
+    if (reduce || !v.live() || v.root === lb) { base.src = src(i); base.alt = alt; return; }
+    const inc = base.cloneNode();
+    inc.classList.add('incoming');
+    inc.style.clipPath = FROM[dir];
+    inc.src = src(i);
+    inc.alt = alt;
+    base.after(inc);
+    const state = { done: () => { inc.remove(); v.state = null; } };
+    v.state = state;
+    try { await inc.decode(); } catch {}
+    if (v.state !== state) return;
+    const timing = { duration: 300, easing: 'steps(6, end)', fill: 'forwards' };
+    const slash = v.shot.querySelector('.deck-slash');
+    const a = inc.animate([{ clipPath: FROM[dir] }, { clipPath: TO[dir] }], timing);
+    const b = slash.animate([{ left: dir > 0 ? '-7%' : '107%', opacity: 1 }, { left: dir > 0 ? '107%' : '-7%', opacity: 1 }], timing);
+    state.done = () => {
+      a.cancel(); b.cancel();
+      inc.classList.remove('incoming');
+      inc.style.clipPath = '';
+      base.remove();
+      v.state = null;
+    };
+    a.finished.then(() => { if (v.state === state) state.done(); }, () => {});
+  };
+
+  const update = () => {
+    const s = slides[index];
+    views.forEach((v) => {
+      v.root.querySelectorAll('.deck-count b').forEach((b) => { b.textContent = pad(index + 1); });
+      v.ticks.querySelectorAll('.deck-tick').forEach((t, k) => {
+        if (k === index) t.setAttribute('aria-current', 'true');
+        else { t.removeAttribute('aria-current'); t.firstElementChild.style.removeProperty('--jag'); }
+      });
+    });
+    deck.querySelector('.deck-open').setAttribute('aria-label', `View ${unit} ${index + 1} of ${N} full screen: ${s.title}`);
+    deck.querySelector('.deck-text-body').innerHTML = `<h2>${Unit} ${index + 1} text: ${s.heading}</h2>${s.html}`;
+    lb.querySelector('.lb-title').textContent = s.heading;
+    const status = `${Unit} ${index + 1} of ${N}: ${s.title}`;
+    (lb.open ? lbStatus : deck.querySelector('.deck-status')).textContent = status;
+  };
+
+  const go = (i, dir) => {
+    index = (i + N) % N;
+    views.forEach((v) => wipe(v, index, dir));
+    update();
+    [index - 1, index + 1].forEach((k) => { new Image().src = src((k + N) % N); });
+  };
+
+  views.forEach((v) => {
+    v.ticks = v.root.querySelector('.deck-ticks');
+    v.ticks.innerHTML = slides.map((s, i) => `<li><button type="button" class="deck-tick" data-i="${i}" aria-label="${Unit} ${i + 1}: ${s.title}" title="${i + 1}. ${s.title}"><i></i></button></li>`).join('');
+    v.root.querySelector('.deck-btn.prev').addEventListener('click', () => go(index - 1, -1));
+    v.root.querySelector('.deck-btn.next').addEventListener('click', () => go(index + 1, 1));
+    v.ticks.addEventListener('click', (e) => {
+      const t = e.target.closest('.deck-tick');
+      if (t && +t.dataset.i !== index) go(+t.dataset.i, +t.dataset.i > index ? 1 : -1);
+    });
+    v.root.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') { e.preventDefault(); go(index + 1, 1); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); go(index - 1, -1); }
+    });
+    /* Touch: a sideways swipe on the slide pages through the deck */
+    let x0 = null, y0 = 0;
+    v.shot.addEventListener('pointerdown', (e) => { x0 = e.clientX; y0 = e.clientY; });
+    v.shot.addEventListener('pointerup', (e) => {
+      if (x0 === null) return;
+      const dx = e.clientX - x0, dy = e.clientY - y0;
+      x0 = null;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.2) { v.shot.dataset.swiped = '1'; go(index + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1); }
+    });
+  });
+  /* The jitter runs only while this deck is on screen */
+  if (!reduce) setInterval(() => {
+    if (!lb.open && !deck.closest('.page.is-current')) return;
+    views.forEach((v) => { v.ticks.children[index]?.firstElementChild.style.setProperty('--jag', jag()); });
+  }, 250);
+
+  /* Full screen: the page-change blot grows from the click, the deck clipping in 80ms behind; closing shrinks it back into the slide */
+  const blot = lb.querySelector('.lb-blot i');
+  const inner = lb.querySelector('.lb-inner');
+  const reach = (o) => Math.max(Math.hypot(o.x, o.y), Math.hypot(innerWidth - o.x, o.y), Math.hypot(o.x, innerHeight - o.y), Math.hypot(innerWidth - o.x, innerHeight - o.y)) + 60;
+  const stageCenter = () => { const r = deck.querySelector('.deck-open').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
+  let closing = false;
+  const open = (e) => {
+    const img = lb.querySelector('.lb-shot img:not(.incoming)');
+    img.src = src(index);
+    img.alt = altOf(index);
+    lb.showModal();
+    update();
+    if (reduce) return;
+    const o = e && e.detail > 0 ? { x: e.clientX, y: e.clientY } : stageCenter();
+    const R = reach(o);
+    blot.style.left = `${o.x}px`;
+    blot.style.top = `${o.y}px`;
+    blot.style.width = `${R * 2.3}px`;
+    const a = blot.animate([{ scale: 0 }, { scale: 1 }], { duration: 420, easing: 'steps(8, end)', fill: 'both' });
+    const b = inner.animate([{ clipPath: `circle(0px at ${o.x}px ${o.y}px)` }, { clipPath: `circle(${R}px at ${o.x}px ${o.y}px)` }], { duration: 420, delay: 80, easing: 'steps(8, end)', fill: 'both' });
+    b.finished.then(() => { a.cancel(); b.cancel(); }, () => {});
+  };
+  const close = () => {
+    if (closing || !lb.open) return;
+    if (reduce) { lb.close(); return; }
+    closing = true;
+    const o = stageCenter();
+    const R = reach(o);
+    const a = inner.animate([{ clipPath: `circle(${R}px at ${o.x}px ${o.y}px)` }, { clipPath: `circle(0px at ${o.x}px ${o.y}px)` }], { duration: 260, easing: 'steps(5, end)', fill: 'forwards' });
+    a.finished.then(() => { lb.close(); a.cancel(); closing = false; }, () => { closing = false; });
+  };
+  deck.querySelector('.deck-open').addEventListener('click', (e) => {
+    const el = e.currentTarget;
+    if (el.dataset.swiped) { delete el.dataset.swiped; return; }
+    open(e);
+  });
+  lb.addEventListener('cancel', (e) => { e.preventDefault(); close(); });
+  lb.querySelector('.lb-close').addEventListener('click', close);
+  lb.querySelector('.lb-stage').addEventListener('click', (e) => {
+    if (lb.querySelector('.lb-shot').dataset.swiped) { delete lb.querySelector('.lb-shot').dataset.swiped; return; }
+    if (!e.target.closest('.lb-frame')) close();
+  });
+
+  update();
+  deck.querySelector('.deck-status').textContent = '';
+});
+</script>
+
+<script>
+/* Motion demo: unchanged from the prototype */
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const main = document.querySelector('.main');
+  const ink = main.querySelector('.ink');
+  const dot = ink.querySelector('i');
+  const pages = Object.fromEntries([...main.querySelectorAll('.page')].map((p) => [p.dataset.page, p]));
+  const nav = document.querySelector('.nav');
+  const bars = [...nav.querySelectorAll('.nav-bar')];
+  const cursor = nav.querySelector('.nav-cursor');
+  const tri = cursor.querySelector('.tri');
+  const valid = (id) => (id in pages ? id : 'home');
+  const fromHash = () => valid(location.hash.replace('#', ''));
+
+  /* Selected plate: corners re-randomized every 250ms, within a small range */
+  const jag = () => [
+    [rand(0, 3), rand(0, 8)], [rand(97, 100), rand(0, 5)], [rand(97, 100), rand(92, 100)], [rand(0, 3), rand(90, 100)]
+  ].map((p) => p.map((n) => n.toFixed(1)).join(',')).join(' ');
+  bars.forEach((b) => b.querySelector('polygon').setAttribute('points', jag()));
+  if (!reduce) setInterval(() => { bars[selected]?.querySelector('polygon').setAttribute('points', jag()); }, 250);
+
+  const side = document.querySelector('.side');
+  new ResizeObserver(() => main.style.setProperty('--side-h', `${side.offsetHeight + 8}px`)).observe(side);
+
+  let current = fromHash();
+  let selected = -1;
+  let cursorAt = null;
+  const indexOf = (id) => bars.findIndex((b) => b.dataset.page === id);
+  const angle = (el) => parseFloat(getComputedStyle(el).getPropertyValue('--r')) || 0;
+  const spot = (i) => { const b = bars[i]; return { x: b.offsetLeft, y: b.offsetTop + b.offsetHeight, r: angle(b) }; };
+  const moveCursor = (t, animate) => {
+    cursor.getAnimations().forEach((a) => a.cancel());
+    if (!animate || !cursorAt || reduce) {
+      cursor.animate([{ translate: `${t.x}px ${t.y}px`, rotate: `${t.r}deg` }], { duration: 0, fill: 'forwards' });
+    } else {
+      const f = cursorAt;
+      cursor.animate([
+        { translate: `${f.x}px ${f.y}px`, rotate: `${f.r}deg` },
+        { translate: `${t.x + (t.x - f.x) * 0.18}px ${t.y + (t.y - f.y) * 0.18}px`, rotate: `${t.r + (t.r - f.r) * 0.4}deg`, offset: 0.6 },
+        { translate: `${t.x}px ${t.y}px`, rotate: `${t.r}deg` }
+      ], { duration: 120, easing: 'steps(3, end)', fill: 'forwards' });
+      tri.animate([{ scale: 1.4 }, { scale: 1 }], { duration: 160, delay: 120, easing: 'steps(3, end)' });
+    }
+    cursorAt = t;
+  };
+  const select = (i, animate = true) => {
+    if (i === selected) return;
+    bars.forEach((b, j) => b.classList.toggle('is-on', j === i));
+    selected = i;
+    moveCursor(spot(i), animate);
+  };
+  const markCurrent = () => {
+    bars.forEach((b) => (b.dataset.page === current ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current')));
+  };
+  bars.forEach((b, i) => {
+    b.addEventListener('pointerenter', () => select(i));
+    b.addEventListener('focus', () => select(i));
+  });
+  nav.addEventListener('pointerleave', () => select(indexOf(current)));
+  nav.addEventListener('focusout', (e) => { if (!nav.contains(e.relatedTarget)) select(indexOf(current)); });
+  addEventListener('resize', () => { if (selected >= 0) { cursorAt = null; moveCursor(spot(selected), false); } });
+
+  const enter = (page, base = 0) => {
+    if (reduce) return;
+    [...page.querySelectorAll('[data-in]')].forEach((el, i) => {
+      el.animate([
+        { opacity: 0, translate: '-26px 0' },
+        { opacity: 1, translate: '5px 0', offset: 0.7 },
+        { opacity: 1, translate: '0 0' }
+      ], { duration: 220, delay: base + i * 50, easing: 'steps(4, end)', fill: 'backwards' });
+    });
+  };
+
+  let origin = null;
+  let busy = false;
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href^="#"]');
+    if (!a) return;
+    const m = main.getBoundingClientRect();
+    const r = a.getBoundingClientRect();
+    origin = { x: r.left + r.width / 2 - m.left, y: r.top + r.height / 2 - m.top };
+  });
+  const focusPage = (page) => {
+    const target = page.querySelector('.h1[tabindex], [data-focus]');
+    if (target) target.focus({ preventScroll: true });
+  };
+  const go = (to) => {
+    if (to === current || busy) { if (to === current) select(indexOf(current)); return; }
+    const show = pages[to];
+    const hide = pages[current];
+    current = to;
+    markCurrent();
+    select(indexOf(current));
+    show.scrollTop = 0;
+    const fallback = () => {
+      const m = main.getBoundingClientRect();
+      const r = bars[indexOf(to)].getBoundingClientRect();
+      return { x: r.left + r.width / 2 - m.left, y: r.top + r.height / 2 - m.top };
+    };
+    const o = origin || fallback();
+    origin = null;
+    if (reduce) {
+      hide.classList.remove('is-current');
+      show.classList.add('is-current');
+      focusPage(show);
+      return;
+    }
+    busy = true;
+    const W = main.clientWidth, H = main.clientHeight;
+    const R = Math.max(Math.hypot(o.x, o.y), Math.hypot(W - o.x, o.y), Math.hypot(o.x, H - o.y), Math.hypot(W - o.x, H - o.y)) + 60;
+    dot.style.left = `${o.x}px`;
+    dot.style.top = `${o.y}px`;
+    dot.style.width = `${R * 2.3}px`;
+    hide.style.zIndex = 1;
+    show.style.zIndex = 3;
+    ink.style.visibility = 'visible';
+    show.classList.add('is-current');
+    const a1 = dot.animate([{ scale: 0 }, { scale: 1 }], { duration: 500, easing: 'steps(10, end)', fill: 'both' });
+    const a2 = show.animate([{ clipPath: `circle(0px at ${o.x}px ${o.y}px)` }, { clipPath: `circle(${R}px at ${o.x}px ${o.y}px)` }],
+      { duration: 500, delay: 90, easing: 'steps(10, end)', fill: 'both' });
+    enter(show, 380);
+    a2.onfinish = () => {
+      hide.classList.remove('is-current');
+      hide.style.zIndex = '';
+      show.style.zIndex = '';
+      ink.style.visibility = 'hidden';
+      a1.cancel();
+      a2.cancel();
+      busy = false;
+      focusPage(show);
+      if (fromHash() !== current) go(fromHash());
+    };
+  };
+  addEventListener('hashchange', () => go(fromHash()));
+
+  pages[current].classList.add('is-current');
+  markCurrent();
+  select(indexOf(current), false);
+})();
+
+/* Explorer: palettes, font pairings, fine-tuning and favorites */
+(() => {
+  const root = document.documentElement;
+  const $ = (id) => document.getElementById(id);
+  const store = {
+    get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+  };
+  const clone = (o) => JSON.parse(JSON.stringify(o));
+
+  /* Dark only. Game palettes are drawn from each game's signature colors, not official values. */
+  const PALETTES = [
+    { id: 'demo', name: 'Demo black & white', seed: 'Where the demo is now',
+      c: { paper: '#111316', paper2: '#1f2328', ink: '#e8eaed', plate: '#e8eaed', plateInk: '#121417', accent: '#121417', accentInk: '#e8eaed', mark: 'plate', blot: 'plate' } },
+    { id: 'moonlit', name: 'Moonlit Blue', seed: 'Persona 3 Reload',
+      c: { paper: '#071229', paper2: '#10264c', ink: '#e4f1ff', plate: '#1552c4', plateInk: '#ffffff', accent: '#4ae0fa', accentInk: '#04112a', mark: 'accent', blot: 'plate' } },
+    { id: 'rebel', name: 'Rebel Red', seed: 'Persona 5',
+      c: { paper: '#0f0f10', paper2: '#232325', ink: '#f2f2f2', plate: '#d61a22', plateInk: '#ffffff', accent: '#f2f2f2', accentInk: '#111111', mark: 'plate', blot: 'plate' } },
+    { id: 'nook-night', name: 'Nook Night', seed: 'Animal Crossing: dialog cream on the island at night',
+      c: { paper: '#0f2a30', paper2: '#1b3d44', ink: '#f6efd9', plate: '#f6efd9', plateInk: '#6b4f2f', accent: '#f7d23e', accentInk: '#4a3418', mark: 'accent', blot: 'plate' } },
+    { id: 'resident', name: 'Resident Services', seed: 'Animal Crossing: leaf green, NookPhone teal',
+      c: { paper: '#22180f', paper2: '#3a2a1b', ink: '#f3ead2', plate: '#5aa846', plateInk: '#0f1d0b', accent: '#2fd1c0', accentInk: '#06231f', mark: 'accent', blot: 'plate' } },
+    { id: 'splat-1', name: 'Turf War: Orange vs Blue', seed: 'Splatoon',
+      c: { paper: '#0f0f12', paper2: '#1f2026', ink: '#f4f4f4', plate: '#ff7a1a', plateInk: '#160a02', accent: '#2f5bff', accentInk: '#ffffff', mark: 'plate', blot: 'plate' } },
+    { id: 'splat-2', name: 'Turf War: Pink vs Green', seed: 'Splatoon 2',
+      c: { paper: '#0e0e10', paper2: '#1e1e22', ink: '#f3f3f3', plate: '#f02d7d', plateInk: '#160811', accent: '#c6f432', accentInk: '#141a05', mark: 'accent', blot: 'plate' } },
+    { id: 'splat-3', name: 'Turf War: Yellow vs Blue', seed: 'Splatoon 3',
+      c: { paper: '#0d0e14', paper2: '#1d1f2b', ink: '#f3f3f6', plate: '#4b3df0', plateInk: '#ffffff', accent: '#e8f53a', accentInk: '#14160a', mark: 'accent', blot: 'accent' } },
+    { id: 'labuyo-gold', name: 'Labuyo & Gold', seed: 'Your projects: Brew oxblood, CU gold',
+      c: { paper: '#140f10', paper2: '#281e1f', ink: '#f1ebe7', plate: '#8f1d20', plateInk: '#fff3ec', accent: '#d9c287', accentInk: '#18120b', mark: 'accent', blot: 'plate' } },
+    { id: 'ink-orange', name: 'Ink + Labuyo Orange', seed: 'Black & white + one accent',
+      c: { paper: '#111316', paper2: '#1f2328', ink: '#e8eaed', plate: '#e8eaed', plateInk: '#121417', accent: '#ff6a33', accentInk: '#121417', mark: 'accent', blot: 'accent' } },
+    { id: 'ink-gold', name: 'Ink + CU Gold', seed: 'Black & white + one accent',
+      c: { paper: '#0e0e0e', paper2: '#201f1d', ink: '#ecebe7', plate: '#cfb87c', plateInk: '#111111', accent: '#111111', accentInk: '#e9d9a8', mark: 'plate', blot: 'plate' } },
+    { id: 'konbini', name: 'Konbini Cobalt', seed: 'Surprise: Japanese drink label',
+      c: { paper: '#0a1226', paper2: '#162346', ink: '#e8eef9', plate: '#2a5ee0', plateInk: '#ffffff', accent: '#ffffff', accentInk: '#1440b0', mark: 'plate', blot: 'plate' } },
+    { id: 'riso', name: 'Riso Pink & Blue', seed: 'Surprise: risograph zine',
+      c: { paper: '#0f1226', paper2: '#1d2244', ink: '#eef0ff', plate: '#3a50c4', plateInk: '#ffffff', accent: '#ff5fae', accentInk: '#1c0f2b', mark: 'accent', blot: 'accent' } },
+    { id: 'tangerine', name: 'Tangerine', seed: 'Surprise: hot orange on near-black',
+      c: { paper: '#1a0d05', paper2: '#2f180b', ink: '#ffd9c2', plate: '#ff6b1a', plateInk: '#140c06', accent: '#140c06', accentInk: '#ffb88f', mark: 'plate', blot: 'plate' } }
+  ];
+
+  const BODY = {
+    atkinson: { family: 'Atkinson Hyperlegible', spec: 'Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700', sc: 1 },
+    atkinsonNext: { family: 'Atkinson Hyperlegible Next', spec: 'Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800', sc: 1 },
+    hanken: { family: 'Hanken Grotesk', spec: 'Hanken+Grotesk:ital,wght@0,100..900;1,100..900', sc: 1 },
+    onest: { family: 'Onest', spec: 'Onest:wght@100..900', sc: 1 },
+    biz: { family: 'BIZ UDPGothic', spec: 'BIZ+UDPGothic:wght@400;700', sc: .97 },
+    albert: { family: 'Albert Sans', spec: 'Albert+Sans:ital,wght@0,100..900;1,100..900', sc: 1 },
+    publicSans: { family: 'Public Sans', spec: 'Public+Sans:ital,wght@0,100..900;1,100..900', sc: 1 }
+  };
+  const TYPES = [
+    { id: 'demo', name: 'Archivo Expanded', seed: 'Where the demo is now',
+      d: { family: 'Archivo', spec: 'Archivo:wdth,wght@62..125,100..900', w: 900, w2: 800, wd: 118, it: false, tr: -0.025, sc: 1, sn: 1 }, b: BODY.atkinson },
+    { id: 'mona', name: 'Mona Sans Expanded', seed: 'Sharp and wide',
+      d: { family: 'Mona Sans', spec: 'Mona+Sans:ital,wdth,wght@0,75..125,200..900;1,75..125,200..900', w: 900, w2: 800, wd: 125, it: false, tr: -0.02, sc: .96, sn: .95 }, b: BODY.atkinsonNext },
+    { id: 'anybody', name: 'Anybody Wide Italic', seed: 'Loud, forward-leaning',
+      d: { family: 'Anybody', spec: 'Anybody:ital,wdth,wght@0,50..150,100..900;1,50..150,100..900', w: 900, w2: 800, wd: 128, it: true, tr: -0.02, sc: .9, sn: .86 }, b: BODY.hanken },
+    { id: 'unbounded', name: 'Unbounded', seed: 'Wide and geometric',
+      d: { family: 'Unbounded', spec: 'Unbounded:wght@200..900', w: 800, w2: 700, wd: 100, it: false, tr: -0.02, sc: .82, sn: .8 }, b: BODY.onest },
+    { id: 'dela', name: 'Dela Gothic One', seed: 'Heavy Japanese gothic',
+      d: { family: 'Dela Gothic One', spec: 'Dela+Gothic+One', w: 400, w2: 400, wd: 100, it: false, tr: 0, sc: .9, sn: .88 }, b: BODY.biz },
+    { id: 'saira', name: 'Saira Expanded', seed: 'Sporty, technical',
+      d: { family: 'Saira', spec: 'Saira:ital,wdth,wght@0,50..125,100..900;1,50..125,100..900', w: 800, w2: 700, wd: 125, it: false, tr: -0.01, sc: .98, sn: .95 }, b: BODY.albert },
+    { id: 'kanit', name: 'Kanit Black Italic', seed: 'Game-menu energy',
+      d: { family: 'Kanit', spec: 'Kanit:ital,wght@0,400;0,700;0,800;0,900;1,800;1,900', w: 900, w2: 800, wd: 100, it: true, tr: -0.01, sc: 1.02, sn: 1 }, b: BODY.publicSans },
+    { id: 'chakra', name: 'Chakra Petch', seed: 'Cut corners, like the plates',
+      d: { family: 'Chakra Petch', spec: 'Chakra+Petch:ital,wght@0,400;0,600;0,700;1,700', w: 700, w2: 700, wd: 100, it: false, tr: -0.01, sc: 1.05, sn: 1.02 }, b: BODY.atkinsonNext },
+    { id: 'shoulders', name: 'Big Shoulders', seed: 'Tall and condensed',
+      d: { family: 'Big Shoulders', spec: 'Big+Shoulders:opsz,wght@10..72,100..900', w: 900, w2: 800, wd: 100, it: false, tr: 0, sc: 1.3, sn: 1.22 }, b: BODY.publicSans }
+  ];
+
+  /* Fonts: full families load on demand; the list previews load a tiny subset of each face */
+  const loaded = new Set(['Archivo', 'Atkinson Hyperlegible']);
+  const fontURL = (spec, extra = '') => `https://fonts.googleapis.com/css2?family=${spec}${extra}&display=swap`;
+  const addSheet = (href) => new Promise((res) => {
+    const l = document.createElement('link');
+    l.rel = 'stylesheet';
+    l.href = href;
+    l.onload = () => res(true);
+    l.onerror = () => { l.remove(); res(false); };
+    document.head.appendChild(l);
+  });
+  const ensure = async (face) => {
+    if (loaded.has(face.family)) return true;
+    const ok = await addSheet(fontURL(face.spec));
+    if (ok) loaded.add(face.family);
+    return ok;
+  };
+  (() => {
+    const fams = new Map();
+    const words = [];
+    TYPES.forEach((t) => {
+      words.push(t.name, 'with ' + t.b.family);
+      [t.d, t.b].forEach((f) => { if (!loaded.has(f.family)) fams.set(f.family, f.spec); });
+    });
+    const text = [...new Set(words.join('').split(''))].join('');
+    const families = [...fams.values()].join('&family=');
+    if (families) addSheet(fontURL(families, '&text=' + encodeURIComponent(text)));
+  })();
+  const SPEC_TRIES = ['wght@100..900', 'wght@200..900', 'wght@100..800', 'wght@300..900', 'wght@200..800', 'wght@300..700', 'wght@400;700;900', 'wght@400;700', ''];
+  const loadByName = async (name) => {
+    const enc = name.trim().replace(/\s+/g, '+');
+    for (const s of SPEC_TRIES) {
+      const spec = s ? `${enc}:${s}` : enc;
+      if (await addSheet(fontURL(spec))) { loaded.add(name.trim()); return spec; }
+    }
+    return null;
+  };
+  const stack = (family, kind) => `"${family}", ${kind === 'd' ? '"Arial Black", Arial, sans-serif' : '"Segoe UI", system-ui, sans-serif'}`;
+
+  /* State */
+  const saved = store.get('cte-state-dark');
+  const state = {
+    pal: { id: 'demo', name: PALETTES[0].name, custom: false, c: clone(PALETTES[0].c) },
+    type: { id: 'demo', name: TYPES[0].name, custom: false, d: clone(TYPES[0].d), b: clone(TYPES[0].b) }
+  };
+  if (saved && saved.pal && saved.pal.c && saved.type) Object.assign(state, saved);
+  const persist = () => store.set('cte-state-dark', state);
+  const setOf = () => state.pal.c;
+
+  /* Contrast (WCAG 2) */
+  const lum = (hex) => {
+    const n = parseInt(hex.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; })
+      .reduce((s, v, i) => s + v * [.2126, .7152, .0722][i], 0);
+  };
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + .05) / (y + .05); };
+
+  const apply = () => {
+    const c = state.pal.c;
+    const mark = c.mark === 'accent' ? [c.accent, c.accentInk] : [c.plate, c.plateInk];
+    const blot = c.blot === 'accent' ? c.accent : c.plate;
+    const s = root.style;
+    s.setProperty('--paper', c.paper);
+    s.setProperty('--paper-2', c.paper2);
+    s.setProperty('--ink', c.ink);
+    s.setProperty('--plate', c.plate);
+    s.setProperty('--plate-ink', c.plateInk);
+    s.setProperty('--accent', c.accent);
+    s.setProperty('--accent-ink', c.accentInk);
+    s.setProperty('--mark', mark[0]);
+    s.setProperty('--mark-ink', mark[1]);
+    s.setProperty('--blot', blot);
+    const d = state.type.d, b = state.type.b;
+    s.setProperty('--display', stack(d.family, 'd'));
+    s.setProperty('--body', stack(b.family, 'b'));
+    s.setProperty('--d-w', d.w);
+    s.setProperty('--d-w2', d.w2);
+    s.setProperty('--d-wd', d.wd + '%');
+    s.setProperty('--d-it', d.it ? 'italic' : 'normal');
+    s.setProperty('--d-tr', d.tr + 'em');
+    s.setProperty('--d-sc', d.sc);
+    s.setProperty('--d-sn', d.sn);
+    s.setProperty('--b-sc', b.sc);
+    renderContrast(c, mark);
+    persist();
+  };
+  const settle = () => { dispatchEvent(new Event('resize')); };
+
+  /* Rendering */
+  const chipHTML = (c) => `<span class="chips" aria-hidden="true">${[c.paper, c.plate, c.accent, c.ink].map((h) => `<i style="background:${h}"></i>`).join('')}</span>`;
+  const renderPalettes = () => {
+    $('pal-list').innerHTML = PALETTES.map((p) => {
+      const on = state.pal.id === p.id;
+      const seed = on && state.pal.custom ? 'Customized' : p.seed;
+      return `<li><button type="button" class="opt" data-pal="${p.id}" aria-pressed="${on}"><span><span class="opt-name">${p.name}</span><span class="opt-seed">${seed}</span></span>${chipHTML(on ? state.pal.c : p.c)}</button></li>`;
+    }).join('');
+  };
+  const renderTypes = () => {
+    $('type-list').innerHTML = TYPES.map((t) => {
+      const on = state.type.id === t.id;
+      const d = on ? state.type.d : t.d;
+      const b = on ? state.type.b : t.b;
+      const faceStyle = `font-family:${stack(d.family, 'd').replace(/"/g, "'")};font-weight:${d.w};font-stretch:${d.wd}%;font-style:${d.it ? 'italic' : 'normal'}`;
+      const bodyStyle = `font-family:${stack(b.family, 'b').replace(/"/g, "'")}`;
+      const name = on && state.type.custom ? `${d.family} (customized)` : t.name;
+      return `<li><button type="button" class="opt type-opt" data-type="${t.id}" aria-pressed="${on}"><span class="type-face" style="${faceStyle}">${name}</span><span class="type-body" style="${bodyStyle}">with ${b.family}</span></button></li>`;
+    }).join('');
+  };
+  const grade = (r, large) => (r >= 4.5 ? 'ok' : r >= 3 ? 'large' : 'bad');
+  const renderContrast = (c, mark) => {
+    const rows = [
+      ['Body text', c.ink, c.paper],
+      ['Menu text', c.plateInk, c.plate],
+      ['Selected item', c.accentInk, c.accent],
+      ['Name highlight', mark[1], mark[0]]
+    ];
+    $('contrast').innerHTML = rows.map(([label, fg, bg]) => {
+      const r = ratio(fg, bg);
+      const g = grade(r);
+      const word = g === 'ok' ? 'passes AA' : g === 'large' ? 'large text only' : 'too low';
+      return `<div class="cbadge" data-grade="${g}"><b>${label}</b><span>${r.toFixed(1)}:1, ${word}</span></div>`;
+    }).join('');
+  };
+
+  const ROLES = [
+    ['paper', 'Page background'], ['paper2', 'Picture frames'], ['ink', 'Text'],
+    ['plate', 'Sidebar, buttons'], ['plateInk', 'Text on sidebar'],
+    ['accent', 'Selected menu item, cursor'], ['accentInk', 'Text on selected item']
+  ];
+  $('color-fields').innerHTML = ROLES.map(([k, label]) => `
+    <div class="field"><label for="h-${k}">${label}</label>
+      <div class="crow"><input type="color" id="c-${k}" aria-label="${label} color picker"><input type="text" class="hex" id="h-${k}" maxlength="7" spellcheck="false" autocomplete="off"></div>
+    </div>`).join('') + `
+    <div class="field"><label for="c-mark">Name highlight uses</label>
+      <select id="c-mark"><option value="plate">Sidebar color</option><option value="accent">Selected-item color</option></select></div>
+    <div class="field"><label for="c-blot">Page-change blot uses</label>
+      <select id="c-blot"><option value="plate">Sidebar color</option><option value="accent">Selected-item color</option></select></div>`;
+
+  const syncColorFields = () => {
+    const c = setOf();
+    ROLES.forEach(([k]) => {
+      $('c-' + k).value = c[k];
+      const h = $('h-' + k);
+      if (document.activeElement !== h) { h.value = c[k]; h.removeAttribute('aria-invalid'); }
+    });
+    $('c-mark').value = c.mark;
+    $('c-blot').value = c.blot;
+  };
+  const syncTypeFields = () => {
+    const d = state.type.d, b = state.type.b;
+    if (document.activeElement !== $('t-dname')) $('t-dname').value = d.family;
+    if (document.activeElement !== $('t-bname')) $('t-bname').value = b.family;
+    $('t-w').value = d.w; $('o-w').textContent = d.w;
+    $('t-wd').value = d.wd; $('o-wd').textContent = d.wd + '%';
+    $('t-sc').value = Math.round(d.sc * 100); $('o-sc').textContent = Math.round(d.sc * 100) + '%';
+    $('t-bsc').value = Math.round(b.sc * 100); $('o-bsc').textContent = Math.round(b.sc * 100) + '%';
+    $('t-it').checked = !!d.it;
+  };
+  const renderAll = () => { apply(); renderPalettes(); renderTypes(); syncColorFields(); syncTypeFields(); };
+
+  /* Palette and type choices */
+  $('pal-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-pal]');
+    if (!btn) return;
+    const p = PALETTES.find((x) => x.id === btn.dataset.pal);
+    state.pal = { id: p.id, name: p.name, custom: false, c: clone(p.c) };
+    renderAll();
+  });
+  const pickType = async (t) => {
+    state.type = { id: t.id, name: t.name, custom: false, d: clone(t.d), b: clone(t.b) };
+    renderAll();
+    await Promise.all([ensure(t.d), ensure(t.b)]);
+    await document.fonts.ready;
+    settle();
+  };
+  $('type-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-type]');
+    if (btn) pickType(TYPES.find((x) => x.id === btn.dataset.type));
+  });
+
+  /* Fine-tune colors */
+  const markCustomPal = () => { state.pal.custom = true; };
+  const setColor = (k, v) => { setOf()[k] = v.toLowerCase(); markCustomPal(); apply(); renderPalettes(); syncColorFields(); };
+  ROLES.forEach(([k]) => {
+    $('c-' + k).addEventListener('input', (e) => setColor(k, e.target.value));
+    $('h-' + k).addEventListener('input', (e) => {
+      let v = e.target.value.trim();
+      if (v && v[0] !== '#') v = '#' + v;
+      if (/^#[0-9a-f]{6}$/i.test(v)) { e.target.removeAttribute('aria-invalid'); setColor(k, v); }
+      else e.target.setAttribute('aria-invalid', 'true');
+    });
+    $('h-' + k).addEventListener('blur', syncColorFields);
+  });
+  $('c-mark').addEventListener('change', (e) => { setOf().mark = e.target.value; markCustomPal(); apply(); renderPalettes(); });
+  $('c-blot').addEventListener('change', (e) => { setOf().blot = e.target.value; markCustomPal(); apply(); renderPalettes(); });
+
+  /* Fine-tune fonts */
+  const markCustomType = () => { state.type.custom = true; };
+  const tStatus = (msg, tone) => { const el = $('t-status'); el.textContent = msg; if (tone) el.dataset.tone = tone; else delete el.dataset.tone; };
+  const loadCustom = async (kind) => {
+    const input = $(kind === 'd' ? 't-dname' : 't-bname');
+    const name = input.value.trim();
+    if (!name) { tStatus('Type a font name first, as it appears on fonts.google.com.', 'bad'); return; }
+    tStatus(`Loading ${name}…`);
+    const spec = await loadByName(name);
+    if (!spec) { tStatus(`Couldn't find "${name}" on Google Fonts. Check the spelling as it appears on fonts.google.com.`, 'bad'); return; }
+    const face = state.type[kind];
+    face.family = name;
+    face.spec = spec;
+    if (kind === 'd') { face.it = false; }
+    markCustomType();
+    renderAll();
+    await document.fonts.ready;
+    settle();
+    tStatus(`${name} loaded as the ${kind === 'd' ? 'heading' : 'body'} font.`);
+  };
+  $('t-dload').addEventListener('click', () => loadCustom('d'));
+  $('t-bload').addEventListener('click', () => loadCustom('b'));
+  $('t-dname').addEventListener('keydown', (e) => { if (e.key === 'Enter') loadCustom('d'); });
+  $('t-bname').addEventListener('keydown', (e) => { if (e.key === 'Enter') loadCustom('b'); });
+  const slide = (id, fn) => $(id).addEventListener('input', (e) => { fn(+e.target.value); markCustomType(); apply(); renderTypes(); syncTypeFields(); settle(); });
+  slide('t-w', (v) => { state.type.d.w = v; state.type.d.w2 = Math.max(100, Math.min(v, v >= 800 ? v - 100 : v)); });
+  slide('t-wd', (v) => { state.type.d.wd = v; });
+  slide('t-sc', (v) => { state.type.d.sc = v / 100; state.type.d.sn = Math.min(1.25, v / 100); });
+  slide('t-bsc', (v) => { state.type.b.sc = v / 100; });
+  $('t-it').addEventListener('change', (e) => { state.type.d.it = e.target.checked; markCustomType(); apply(); renderTypes(); settle(); });
+
+  /* Panel open and closed */
+  const setOpen = (open) => {
+    $('explorer').classList.toggle('is-closed', !open);
+    root.classList.toggle('panel-open', open);
+    $('ex-toggle').setAttribute('aria-expanded', String(open));
+    $('ex-toggle-label').textContent = open ? 'Hide' : 'Colors & type';
+    store.set('cte-open', open);
+    settle();
+  };
+  $('ex-toggle').addEventListener('click', () => setOpen($('explorer').classList.contains('is-closed')));
+
+  /* Favorites: kept in the artifact's shared store so Claude can read them; this browser only as a fallback */
+  const summary = () => {
+    const c = state.pal.c;
+    const d = state.type.d, b = state.type.b;
+    return [
+      `Palette: ${state.pal.name}${state.pal.custom ? ' (customized)' : ''}`,
+      `  page ${c.paper}, frames ${c.paper2}, text ${c.ink}, sidebar ${c.plate} with ${c.plateInk}, selected ${c.accent} with ${c.accentInk}, name highlight uses ${c.mark}, blot uses ${c.blot}`,
+      `Fonts: headings ${d.family} (weight ${d.w}, width ${d.wd}%, size ${Math.round(d.sc * 100)}%${d.it ? ', italic' : ''}), body ${b.family} (size ${Math.round(b.sc * 100)}%)`
+    ].join('\n');
+  };
+  const favStatus = (msg, tone) => { const el = $('fav-status'); el.textContent = msg; if (tone) el.dataset.tone = tone; else delete el.dataset.tone; };
+  let favs = [];
+  let db = null;
+  const renderFavs = () => {
+    if (!favs.length) {
+      $('fav-list').innerHTML = `<li class="empty">No favorites yet. Pick a palette and fonts you like, then press Save this combo.</li>`;
+      return;
+    }
+    $('fav-list').innerHTML = favs.map((f) => {
+      const c = f.pal.c;
+      return `<li class="fav">${chipHTML(c)}<span class="fav-text"><b>${f.pal.name}${f.pal.custom ? ' (customized)' : ''}</b><span>${f.type.d.family} + ${f.type.b.family}</span></span>
+        <span class="fav-btns"><button type="button" class="ubtn small" data-apply="${f.id}">Apply</button><button type="button" class="ubtn small" data-remove="${f.id}">Remove</button></span></li>`;
+    }).join('');
+  };
+  const localFavs = () => store.get('cte-favs') || [];
+  $('fav-save').addEventListener('click', async () => {
+    const doc = { createdAt: new Date().toISOString(), pal: clone(state.pal), type: clone(state.type), summary: summary() };
+    $('fav-save').disabled = true;
+    try {
+      if (db) {
+        await db.collection('favorites').add(doc);
+        favStatus('Saved. Claude can see your favorites now.');
+      } else {
+        const list = localFavs();
+        list.unshift({ ...doc, id: 'l' + Date.now() });
+        store.set('cte-favs', list);
+        favs = list;
+        renderFavs();
+        favStatus('Saved in this browser. Use Copy for Claude to send it.');
+      }
+    } catch (err) {
+      favStatus(err && err.code === 'quota_exceeded' ? 'The favorites list is full. Remove a few, then save again.' : 'Couldn\'t save that one. Try again in a moment.', 'bad');
+    } finally {
+      $('fav-save').disabled = false;
+    }
+  });
+  $('fav-copy').addEventListener('click', async () => {
+    const text = summary();
+    try { await navigator.clipboard.writeText(text); favStatus('Copied. Paste it into the chat with Claude.'); }
+    catch { favStatus(text); }
+  });
+  $('fav-list').addEventListener('click', async (e) => {
+    const a = e.target.closest('[data-apply]');
+    const r = e.target.closest('[data-remove]');
+    if (a) {
+      const f = favs.find((x) => x.id === a.dataset.apply);
+      if (!f) return;
+      state.pal = clone(f.pal);
+      state.type = clone(f.type);
+      renderAll();
+      await Promise.all([ensure(f.type.d), ensure(f.type.b)]);
+      await document.fonts.ready;
+      settle();
+      favStatus('Applied.');
+    }
+    if (r) {
+      const id = r.dataset.remove;
+      try {
+        if (db) await db.doc('favorites/' + id).delete();
+        else { const list = localFavs().filter((x) => x.id !== id); store.set('cte-favs', list); favs = list; renderFavs(); }
+        favStatus('Removed.');
+      } catch { favStatus('Couldn\'t remove that one. Try again in a moment.', 'bad'); }
+    }
+  });
+
+  /* Start */
+  favs = localFavs();
+  renderFavs();
+  const open = store.get('cte-open');
+  setOpen(open === null ? !matchMedia('(max-width: 760px)').matches : open);
+  renderAll();
+  Promise.all([ensure(state.type.d), ensure(state.type.b)]).then(() => document.fonts.ready).then(settle);
+
+  (async () => {
+    try {
+      const c = window.claude && window.claude.use ? await window.claude.use('db') : null;
+      if (!c) return;
+      db = c;
+      db.collection('favorites').orderBy('createdAt', 'desc').onSnapshot((snap) => {
+        favs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        renderFavs();
+      }, () => { db = null; favs = localFavs(); renderFavs(); });
+    } catch { db = null; }
+  })();
+})();
+</script>

@@ -1,0 +1,311 @@
+        /* CSS Reset and Base Styles */
+        :root {
+            /* Color Palette - 5 Core Colors */
+            --color-primary: #1D7874;     /* Deep Ocean - Main Brand Color */
+            --color-secondary: #679289;   /* Jungle Teal - Complementary Action Color */
+            --color-accent: #FF6663;      /* Vibrant Coral - Highlight / Warning Color */
+            --color-neutral: #54494B;     /* Taupe Grey - Neutral Text and Background */
+            --color-highlight: #F4C095;   /* Peach Glow - Accent / Attention Color */
+            
+            /* Derived Colors for Flexibility */
+            --color-background: linear-gradient(171deg,rgba(255, 255, 255, 1) 0%, rgba(103, 146, 137, 0.89) 100%);
+            --color-card: color-mix(in srgb, var(--color-secondary) 10%, white);
+            --color-text-dark: var(--color-neutral);
+            --color-text-light: white;
+
+            /* Typography */
+            --font-primary: "Josefin Sans", sans-serif;
+            --font-secondary: "Lexend Deca", sans-serif;
+
+            /* Spacing System */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+
+            /* Border Radius */
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 20px;
+
+            /* Motion */
+            --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+            --duration-fast: 150ms;
+            --duration-base: 250ms;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            line-height: 1.6;
+            color: var(--color-text-dark);
+            padding: var(--spacing-xl);
+            overflow-wrap: break-word;
+        }
+
+        /* Keyboard focus: a light inner ring and a dark outer ring, so one of them always contrasts */
+        :focus-visible {
+            outline: 2px solid var(--color-text-light);
+            box-shadow: 0 0 0 4px var(--color-text-dark);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Typography Styles */
+        /* h2 shares the h1 look for now: home's "Projects" is a section under the page h1 */
+        h1,
+        h2 {
+            font-size: clamp(2rem, 1.5rem + 2.5vw, 3rem);
+            font-weight: 700;
+            line-height: 1.15;
+            text-wrap: balance;
+            margin-bottom: var(--spacing-sm);
+            color: var(--color-primary);
+        }
+
+        h3 {
+            font-size: clamp(1.5rem, 1.25rem + 1.25vw, 2rem);
+            font-weight: 600;
+            line-height: 1.2;
+            text-wrap: balance;
+            margin-bottom: var(--spacing-sm);
+            color: var(--color-secondary);
+        }
+
+        .body-text {
+            font-size: 1rem;
+            margin-bottom: var(--spacing-md);
+            font-family: var(--font-secondary);
+        }
+
+        /* Component Styles */
+        .button {
+            display: inline-block;
+            padding: var(--spacing-sm) var(--spacing-md);
+            background-color: var(--color-highlight);
+            color: var(--color-text-dark);
+            text-decoration: none;
+            border-radius: var(--radius-sm);
+            border: 2px solid transparent;
+            transition:
+                background-color var(--duration-base) var(--ease-out),
+                border-color var(--duration-base) var(--ease-out),
+                transform var(--duration-fast) var(--ease-out);
+        }
+
+        .button:hover {
+            background-color: color-mix(in srgb, var(--color-highlight) 80%, white);
+            border-color: var(--color-highlight);
+        }
+
+        /* Lift only where real hover exists, so a tap on a touch screen doesn't leave the button raised */
+        @media (hover: hover) {
+            .button:hover {
+                transform: translateY(-2px);
+            }
+        }
+
+        .button:active {
+            transform: translateY(0);
+            background-color: var(--color-highlight);
+        }
+
+        .link {
+            color: var(--color-secondary);
+            text-decoration: none;
+            transition:
+                color var(--duration-base) var(--ease-out),
+                text-decoration-color var(--duration-base) var(--ease-out);
+        }
+
+        .link:hover {
+            color: var(--color-accent);
+            text-decoration: underline;
+            text-decoration-color: var(--color-highlight);
+        }
+
+
+                                                /* Additional CSS */
+
+/* Background */
+html {
+background: var(--color-background);
+background-attachment: fixed;
+}
+
+/* Nav Bar */
+header {
+margin-bottom: var(--spacing-sm);
+}
+
+nav ul {
+list-style: none;
+display: flex;
+flex-wrap: wrap;
+gap: 0 var(--spacing-lg);
+padding-bottom: var(--spacing-md);
+}
+
+nav li {
+white-space: nowrap;
+}
+
+/* Current page: underline as well as color, so it doesn't rely on hue alone */
+nav a[aria-current="page"] {
+color: var(--color-accent);
+text-decoration: underline;
+text-decoration-thickness: 2px;
+text-underline-offset: 0.3em;
+}
+
+nav a {
+text-decoration: none;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+min-height: 44px;
+min-width: 44px;
+color: var(--color-secondary);
+font-family: var(--font-secondary);
+font-size: 1.25rem;
+}
+
+/* Bio */
+.h1strong {
+color: var(--color-accent);
+}
+
+.bio-box {
+display: grid;
+grid-template-columns: 220px 1fr;
+gap: var(--spacing-lg);
+padding: var(--spacing-xl);
+margin: 0 auto var(--spacing-sm) auto;
+max-width: 1200px;
+align-items: center;
+}
+
+.pfp {
+width: 180px;
+height: 180px;
+border-radius: 50%;
+object-fit: cover;
+display: block;
+margin: 0 auto;
+}
+
+/* Project Cards: one card for text, home logos, and project images */
+.project-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+gap: var(--spacing-lg);
+}
+
+.project-card {
+padding: var(--spacing-md);
+border-radius: var(--radius-lg);
+display: flex;
+flex-direction: column;
+align-items: center;
+background-color: var(--color-card);
+}
+
+.project-card img {
+display: block;
+width: 100%;
+max-width: 500px;
+height: auto;
+margin: 0 auto;
+padding-top: var(--spacing-md);
+border-radius: var(--radius-lg);
+}
+
+/* Home card logos sit in a fixed-height frame so the two cards line up */
+.project-card .project-logo {
+height: 220px;
+object-fit: contain;
+}
+
+.project-card-body {
+padding: var(--spacing-lg);
+}
+
+.project-card video {
+width: 100%;
+max-width: 600px;
+height: auto;
+display: block;
+margin: 0 auto;
+}
+
+/* Narrow Layout (640px): stack the bio before the headshot column crowds the text */
+@media (max-width: 640px) {
+.bio-box {
+grid-template-columns: 1fr;
+padding: var(--spacing-md);
+gap: var(--spacing-md);
+}
+
+.bio-text {
+text-align: center;
+}
+}
+
+/* Phone Layout (460px) */
+@media (max-width: 460px) {
+body {
+padding: var(--spacing-md);
+}
+
+nav ul {
+justify-content: center;
+gap: 0 calc(var(--spacing-sm) * 1.5);
+}
+
+nav a {
+font-size: 1rem;
+}
+
+.pfp {
+width: 130px;
+height: 130px;
+}
+
+.project-card-body {
+padding: var(--spacing-md);
+}
+
+.project-card img {
+max-width: 100%;
+padding-top: var(--spacing-sm);
+}
+
+.project-card .project-logo {
+height: auto;
+}
+
+.project-card video {
+width: 100%;
+max-width: 450px;
+height: auto;
+display: block;
+margin: var(--spacing-sm) auto 0;
+}
+}
+
+/* Small Phone Layout (under 360px): four nav links won't fit one row, so balance them 2x2 */
+@media (max-width: 359px) {
+nav ul {
+display: grid;
+grid-template-columns: repeat(2, auto);
+}
+}

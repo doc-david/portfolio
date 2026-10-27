@@ -1,0 +1,14 @@
+# Temporary preview and test pages (e.g. site/_vt-test-a.html)
+_*.html
+
+# Machine-local settings
+.claude/settings.local.json
+.impeccable/config.local.json
+
+# OS clutter
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# The full-length Buff Life reel (89.7 MB) stays outside the repo; the site uses the web copy
+Buff Life Captioned Reel.mp4

@@ -1,0 +1,11 @@
+# Normalize text line endings; keep PowerShell scripts in Windows format
+* text=auto
+*.ps1 text eol=crlf
+
+# Binary files: never diff or convert
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
+*.mp4 binary
+*.pptx binary

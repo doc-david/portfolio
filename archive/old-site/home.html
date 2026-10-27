@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>David Doctor Midterm Project</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;600;700&family=Lexend+Deca:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<header>
+  <div class="container">
+    <nav>
+      <ul>
+        <li><a aria-current="page" href="home.html">Home</a></li>
+        <li><a class="link" href="brewpage.html">Doctor's Brew</a></li>
+        <li><a class="link" href="bufflife.html">Buff Life</a></li>
+        <li><a class="link" href="resume.html">Resume</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<section>
+  <div class="bio-box">
+    <img class="pfp" src="media/headshot.jpg" width="400" height="500" decoding="async" alt="Headshot of David Doctor">
+      <div class="bio-text">
+        <h1>Hey! I'm <span class="h1strong">David Doctor</span></h1>
+
+        <p class="body-text">
+        I'm a designer, developer, and analyst studying Information Science at the
+        University of Colorado Boulder. Here are my projects that reflect my
+        interests in branding, UI design, and digital experiences.
+        </p>
+
+        <a class="button" href="https://www.linkedin.com/in/davidrdoctor/"> My LinkedIn </a>
+    </div>
+  </div>
+</section>
+
+
+<section>
+  <div class="container">
+
+    <h2>Projects</h2>
+
+    <div class="project-grid">
+      <article class="project-card" aria-labelledby="brew-title">
+        <img class="project-logo" src="media/brew-logo.png" width="800" height="466" decoding="async" alt="Doctor's Brew Logo">
+
+        <div class="project-card-body">
+          <h3 id="brew-title">Package Design</h3>
+
+          <p class="body-text">
+          Box, bottle, and branding designs for a specialty pepper beer inspired
+          by Filipino culture.
+          </p>
+
+          <a class="button" id="brew-link" href="brewpage.html" aria-labelledby="brew-link brew-title">View Project</a>
+        </div>
+      </article>
+
+      <article class="project-card" aria-labelledby="buff-title">
+        <img class="project-logo" src="media/buff-life-logo.png" width="800" height="601" decoding="async" alt="Buff Life Logo">
+
+        <div class="project-card-body">
+          <h3 id="buff-title">App Design</h3>
+
+          <p class="body-text">
+          A mobile app concept designed to help CU Boulder students manage
+          schedules, events, and campus life.
+          </p>
+
+          <a class="button" id="buff-link" href="bufflife.html" aria-labelledby="buff-link buff-title">View Project</a>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+</main>
+</body>
+</html>

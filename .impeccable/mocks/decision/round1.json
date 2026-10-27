@@ -1,0 +1,89 @@
+{
+  "title": "Choose the visual world",
+  "question": "The roll assigned Konbini Drink Label. Keep it, take an alternate, or re-roll. Every card keeps your pinned mix, the always-visible sidebar, straight pictures and text, and the current words. Three more dealt challengers (a data-sublime barcode field, a sewing-pattern envelope, a degrading broadcast signal) wait in the re-roll pool.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Konbini Drink Label",
+      "kicker": "THE ROLL",
+      "lineage": "Japanese convenience-store drink packaging",
+      "thesis": "The site as one drink label in flavors: a white sleeve, and each project gets its own pure color.",
+      "palette": ["#F6F8FA", "#1446C8", "#B8211C", "#D4B36A", "#0E1A33"],
+      "materials": ["shrink-sleeve label white", "flat process ink", "can-aluminum silver"],
+      "viewport": "A cobalt can-band sidebar with white label bars; Brew and Buff Life sit as two big flavor panels, red and gold, under a compact intro.",
+      "risk": "Flavor colors can drift toward candy and read young, and a beer project inside a drink-label site may blur into the chrome.",
+      "raised": [
+        { "from": "challenger-timetable", "raise": "One rake scale governs every angle (three steps from -3 to -8 degrees), and text baselines always stay flat." },
+        { "from": "challenger-teletext", "raise": "Every plate, bar and frame snaps to one shared module, so margins and alignments line up by construction." }
+      ],
+      "comp": ".impeccable/mocks/decision/assigned.png"
+    },
+    {
+      "id": "model-pick",
+      "label": "Tokyo Line Sign",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "Tokyo rail and metro wayfinding",
+      "thesis": "The site as a transit line: each project a line color, the sidebar the platform sign.",
+      "palette": ["#F2F4F5", "#1B2A48", "#EE8A00", "#D7192A", "#14A0D6"],
+      "materials": ["enamel sign panel", "backlit acrylic"],
+      "viewport": "A navy platform-sign sidebar with line-colored bars; the home page reads as the line, with Brew and Buff Life as its two stops.",
+      "risk": "The most familiar route here: transit styling is a common designer-portfolio move, and real signs lean on station codes and Japanese text the text freeze rules out.",
+      "comp": ".impeccable/mocks/decision/model-pick.png"
+    },
+    {
+      "id": "challenger-glazier",
+      "label": "Glazier's Partition",
+      "verdict": "competitive",
+      "lineage": "steel-framed colorfield glass walls",
+      "thesis": "The site as a glass wall: clear calm panes, and color only where you are.",
+      "palette": ["#111111", "#EEF1F0", "#1F4FB5", "#D08A1E", "#6E1F2A"],
+      "materials": ["black glazing bars", "seeded white glass"],
+      "viewport": "The sidebar is a glazing elevation whose selected pane floods cobalt; each project sits in its own clear pane.",
+      "case": "Holds clarity, since color reserved for state lets the work lead; loses identification, since a glazier's wall is neither David's world nor a recruiter's.",
+      "risk": "Its native motion is slow light, so the pinned snap and blot need translating, and it can read as Mondrian homage.",
+      "comp": ".impeccable/mocks/decision/challenger-glazier.png",
+      "hero": "https://impeccable.style/worlds/cards/craft-making-glazier-colorfield-partition-hero.webp"
+    },
+    {
+      "id": "challenger-timetable",
+      "label": "Timetable Slide Rack",
+      "verdict": "declined",
+      "lineage": "1970s pocket airline timetables",
+      "thesis": "Every page a raked glass slide on a lit goldenrod bed, all set at one type size.",
+      "palette": ["#E3A825", "#2F3A40", "#1A1A1A", "#F1EAD6", "#D2401F", "#1F5E3A"],
+      "materials": ["tinted glass slides", "lit goldenrod bed"],
+      "viewport": "A rack of raked slides with the menu as a tick rail along the rake.",
+      "case": "Loses both: one type size fights the tilted headlines, and a 1971 timetable isn't the reviewers' world.",
+      "kept": "One rake token governs every angle while baselines stay flat.",
+      "risk": "Reads as retro pastiche, and the single type size flattens the work's hierarchy.",
+      "hero": "https://impeccable.style/worlds/cards/rw-timetable-slide-rack-hero.webp"
+    },
+    {
+      "id": "challenger-teletext",
+      "label": "Teletext Magazine",
+      "verdict": "declined",
+      "lineage": "broadcast teletext services",
+      "thesis": "Every page an addressed teletext screen of block-mosaic graphics on black.",
+      "palette": ["#000000", "#FFFF00", "#00FFFF", "#FFFFFF", "#FF0000"],
+      "materials": ["block mosaic", "bitmap type on black"],
+      "viewport": "A 40-column black screen with double-height headers and the projects as numbered pages.",
+      "case": "Loses both: European broadcast nostalgia most US reviewers won't place, and block graphics compete with the project images.",
+      "kept": "One shared module every element snaps to.",
+      "risk": "Retro novelty, and its rigid grid fights the angled plates.",
+      "hero": "https://impeccable.style/worlds/cards/broadcast-programming-teletext-service-hero.webp"
+    }
+  ],
+  "reroll": { "registers": ["safer", "bolder"] },
+  "buildPath": { "value": "comp", "toggle": true },
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "A clean designer portfolio, done impeccably.",
+    "palette": ["#FAFAF9", "#141414", "#2F54EB"],
+    "materials": ["clean grid", "quiet sans type"],
+    "viewport": "Your sidebar on a white page; a large intro line, then the two projects as big image tiles.",
+    "risk": "Indistinguishable from other student portfolios by design; the mix becomes an add-on.",
+    "comp": ".impeccable/mocks/decision/canon.png"
+  },
+  "steer": true
+}
